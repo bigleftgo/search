@@ -1,0 +1,15 @@
+#访问相关配置
+server:
+  port: 8010
+  tomcat:
+    uri-encoding: utf-8
+spring:
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+file:
+# 文件存储路径
+  save-path: E:\temp\file-manager
+# 断点续传文件配置路径
+  conf-path: E:\temp\file-manager\conf
