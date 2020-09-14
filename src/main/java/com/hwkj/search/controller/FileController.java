@@ -1,23 +1,14 @@
 package com.hwkj.search.controller;
 
-import cn.hutool.core.io.file.FileReader;
-import com.hwkj.search.common.*;
+import com.hwkj.search.common.ErrorCode;
+import com.hwkj.search.common.RestResponse;
+import com.hwkj.search.common.RestResponses;
 import com.hwkj.search.service.IFileService;
-import com.hwkj.search.utils.EmptyUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.tomcat.util.http.fileupload.IOUtils;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.nio.file.Files;
 
 /**
  * com.hwkj.search.controller

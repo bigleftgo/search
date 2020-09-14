@@ -19,14 +19,15 @@ import java.io.InputStream;
 public class FileDownloadController {
     /**
      * 下载文件
+     *
      * @return
      * @throws Exception
      */
     @RequestMapping("download/{filename}")
     public ResponseEntity<byte[]> download(@PathVariable String filename, @PathVariable String path) throws IOException {
         //下载文件的路径(这里绝对路径)
-        String filepath= path;//"F:/download/"+filename;
-        File file =new File(filepath);
+        String filepath = path;//"F:/download/"+filename;
+        File file = new File(filepath);
         //创建字节输入流，这里不实用Buffer类
         InputStream in = new FileInputStream(file);
         //available:获取输入流所读取的文件的最大字节数

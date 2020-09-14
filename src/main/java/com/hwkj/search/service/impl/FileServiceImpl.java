@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.file.Files;
 import java.io.File;
 
 
@@ -26,7 +25,7 @@ import java.io.File;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class FileService implements IFileService {
+public class FileServiceImpl implements IFileService {
     @Value("${file.save-path:/data-center/files/}")
     private String savePath;
     @Value("${file.conf-path:/data-center/files/vip-file-manager/conf}")
