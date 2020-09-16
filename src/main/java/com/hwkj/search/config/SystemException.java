@@ -3,7 +3,7 @@ package com.hwkj.search.config;
 /**
  * vip自定义运行时异常实体，用户捕获异常后返回信息
  *
- * @author wgb
+ * @author xzr
  * @date 2019/12/19/16:32
  */
 public class SystemException extends RuntimeException {

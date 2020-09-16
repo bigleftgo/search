@@ -3,7 +3,7 @@ package com.hwkj.search.common;
 /**
  * description
  *
- * @author wgb
+ * @author xzr
  * @date 2020/6/2 9:34
  */
 public interface SysConstant {

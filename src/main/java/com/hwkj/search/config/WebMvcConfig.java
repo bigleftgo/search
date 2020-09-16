@@ -7,7 +7,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 /**
  * 解决跨域访问
  *
- * @author wgb
+ * @author xzr
  * @date 2019/12/29 22:01
  */
 @Configuration

@@ -10,6 +10,10 @@ spring:
       max-request-size: 50MB
 file:
 # 文件存储路径
-  save-path: E:\temp\file-manager
+  save-path: E:\Knowledge\file-manager
 # 断点续传文件配置路径
-  conf-path: E:\temp\file-manager\conf
+  conf-path: E:\Knowledge\file-manager\conf
+# 索引创建路径
+  index-path: E:\index
+md5:
+  secure: d1WiQHyKnJb&Iels

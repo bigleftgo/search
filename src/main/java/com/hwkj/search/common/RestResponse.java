@@ -3,8 +3,8 @@ package com.hwkj.search.common;
 /**
  * 统一响应规范类
  *
- * @author vip
- * @date 2019/11/27 16:44
+ * @author xzr
+ * @date 2020/9/15 16:44
  */
 public class RestResponse<T> {
     /**

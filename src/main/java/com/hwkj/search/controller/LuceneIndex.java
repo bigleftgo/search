@@ -3,7 +3,6 @@ package com.hwkj.search.controller;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -28,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+import org.wltea.analyzer.lucene.IKAnalyzer;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,8 +36,6 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
-
-
 @CrossOrigin
 @SpringBootApplication
 @Controller
@@ -118,7 +116,7 @@ public   class  LuceneIndex {
      */
     private IndexWriter getWriter()throws Exception{
         //Analyzer analyzer=new StandardAnalyzer(); // 标准分词器
-        SmartChineseAnalyzer analyzer=new SmartChineseAnalyzer();
+        IKAnalyzer analyzer=new IKAnalyzer();
         IndexWriterConfig iwc=new IndexWriterConfig(analyzer);
         IndexWriter writer=new IndexWriter(dir, iwc);
         return writer;
@@ -136,7 +134,6 @@ public   class  LuceneIndex {
         for(int i=0;i<1;i++){
             Document doc=new Document();
             //doc.add(new Field("id",id, Field.Store.YES,Field.Index.NOT_ANALYZED_NO_NORMS));
-
             doc.add(new StringField("id", id, Field.Store.YES));
             doc.add(new StringField("name",names[i],Field.Store.YES));
             doc.add(new StringField("age", id, Field.Store.YES));

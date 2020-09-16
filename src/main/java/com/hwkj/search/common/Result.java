@@ -5,8 +5,8 @@ import java.io.Serializable;
 /**
  * 统一Service层返回数据规范类
  *
- * @author vip
- * @date 2019/11/27 16:44
+ * @author xzr
+ * @date 2020/9/15 16:44
  */
 public class Result<T> implements Serializable {
     /**

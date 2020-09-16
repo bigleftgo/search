@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 /**
  * 全局异常处理，捕获所有Controller中抛出的异常。
  *
- * @author wgb
+ * @author xzr
  * @date 2019/7/19
  */
 @Slf4j

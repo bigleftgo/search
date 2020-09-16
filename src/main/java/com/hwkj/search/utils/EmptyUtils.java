@@ -9,8 +9,8 @@ import java.util.Collection;
 /**
  * 继承StringUtils类，添加新的Utils
  *
- * @author vip
- * @date 2019/6/25 14:17
+ * @author xzr
+ * @date 2020/6/25 14:17
  */
 public class EmptyUtils extends StringUtils {
     /**
