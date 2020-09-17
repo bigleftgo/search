@@ -190,33 +190,33 @@ public class LuceneSearch extends SpringBootServletInitializer {
     }
 
 
-    public static void main(String[] args) {
-
-        //SpringApplication.run(LuceneSearch.class, args);
-
-            /*Map wendang = new HashMap();
-            wendang.put("id1","aaaa");
-            wendang.put("id2","bbbb");
-
-            Map shujuku = new HashMap();
-            shujuku.put("id1","abc");
-            shujuku.put("id2","bbb");
-            shujuku.put("id3","ccc");
-
-            Set set = new HashSet<>();*/
-
-        long start = System.currentTimeMillis();
-        for (int i = 0; i < 1000000000; i++) {
-            for (int j = 0; j < 100000000; j++) {
-                //System.out.println("总888888888888888888888888秒");
-            }
-        }
-        long end = System.currentTimeMillis();
-
-        System.out.println("总共花费" + (end - start) + "毫秒");
-
-
-    }
+//    public static void main(String[] args) {
+//
+//        //SpringApplication.run(LuceneSearch.class, args);
+//
+//            /*Map wendang = new HashMap();
+//            wendang.put("id1","aaaa");
+//            wendang.put("id2","bbbb");
+//
+//            Map shujuku = new HashMap();
+//            shujuku.put("id1","abc");
+//            shujuku.put("id2","bbb");
+//            shujuku.put("id3","ccc");
+//
+//            Set set = new HashSet<>();*/
+//
+//        long start = System.currentTimeMillis();
+//        for (int i = 0; i < 1000000000; i++) {
+//            for (int j = 0; j < 100000000; j++) {
+//                //System.out.println("总888888888888888888888888秒");
+//            }
+//        }
+//        long end = System.currentTimeMillis();
+//
+//        System.out.println("总共花费" + (end - start) + "毫秒");
+//
+//
+//    }
 
 
 }

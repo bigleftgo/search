@@ -43,4 +43,6 @@ public interface IFileService {
      * @return
      */
     Result<Object> breakpointResumeUpload(UploadFileParam param, HttpServletRequest request);
+
+    Result<String> returnUrl(String url);
 }

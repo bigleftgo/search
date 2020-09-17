@@ -6,6 +6,7 @@ import java.util.List;
 
 /**
  * com.hwkj.search.bean
+ * 任何知识信息
  *
  * @author Lenovo
  * @CreateTime 2020/9/15 15:00

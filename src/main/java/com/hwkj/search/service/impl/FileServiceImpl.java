@@ -47,6 +47,14 @@ public class FileServiceImpl implements IFileService {
     @Value("${md5.secure}")
     private String secure;
 
+    private final String http = "http://192.168.37.6:8010/";
+
+    /**
+     * 文档上传
+     *
+     * @param file 文件
+     * @return
+     */
     @Override
     public Result<Map<String, Object>> uploadFiles(MultipartFile file) {
         try {
@@ -71,7 +79,8 @@ public class FileServiceImpl implements IFileService {
             file.transferTo(newFile);
             // 保存文件信息
             HashMap<String, Object> map = new HashMap<>();
-            map.put("file", newFile);
+            map.put("path", newFile);
+            map.put("name",newFile.getName());
             return Results.newSuccessResult(map, "上传完成");
         } catch (Exception e) {
             log.error("上传协议文件出错", e);
@@ -79,6 +88,12 @@ public class FileServiceImpl implements IFileService {
         return Results.newFailResult(ErrorCode.FILE_ERROR, "上传失败");
     }
 
+    /**
+     * 获取文件
+     *
+     * @param fileName 文件名
+     * @return
+     */
     @Override
     public Result<File> getFile(String fileName) {
         //文件路径
@@ -87,6 +102,12 @@ public class FileServiceImpl implements IFileService {
         return Results.newSuccessResult(file);
     }
 
+    /**
+     * 获取文件流
+     *
+     * @param fileName 文件名
+     * @return
+     */
     @Override
     public InputStream getFileInputStream(String fileName) {
         try {
@@ -99,6 +120,13 @@ public class FileServiceImpl implements IFileService {
         return null;
     }
 
+    /**
+     * 断点续传
+     *
+     * @param param
+     * @param request
+     * @return
+     */
     @Override
     public Result<Object> breakpointResumeUpload(UploadFileParam param, HttpServletRequest request) {
         try {
@@ -115,5 +143,16 @@ public class FileServiceImpl implements IFileService {
             log.error(e.getMessage(), e);
         }
         return Results.newFailResult(ErrorCode.FILE_UPLOAD, "上传失败");
+    }
+
+    /**
+     * 返回路径
+     *
+     * @param url
+     * @return
+     */
+    @Override
+    public Result<String> returnUrl(String url) {
+        return Results.newSuccessResult(http + savePath + File.separator + url);
     }
 }

@@ -13,10 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
@@ -35,6 +32,7 @@ import java.util.Map;
  */
 @RestController
 @Slf4j
+@CrossOrigin
 public class FileController {
 
     @Autowired
@@ -47,7 +45,7 @@ public class FileController {
      * @return 返回成功或者失败
      */
     @PostMapping("/upload")
-    public RestResponse<Map<String,Object>> upload(MultipartFile file) {
+    public RestResponse<Map<String, Object>> upload(MultipartFile file) {
         if (file.isEmpty()) {
             return RestResponses.newFailResponse(ErrorCode.INVALID_PARAMETER, "文件不能为空");
         }
@@ -57,7 +55,7 @@ public class FileController {
     /**
      * 文件下载
      *
-     * @param request 设置IE适配
+     * @param request  设置IE适配
      * @param response 响应对象
      */
     @GetMapping(value = "/download")
@@ -96,12 +94,24 @@ public class FileController {
     /**
      * 断点续传方式上传文件：用于大文件上传
      *
-     * @param param 断点上传
+     * @param param   断点上传
      * @param request 请求体
      * @return 返回结果集
      */
     @PostMapping(value = "/breakpoint-upload", consumes = "multipart/*", headers = "content-type=multipart/form-data", produces = "application/json;charset=UTF-8")
     public RestResponse<Object> breakpointResumeUpload(UploadFileParam param, HttpServletRequest request) {
         return RestResponses.newResponseFromResult(fileService.breakpointResumeUpload(param, request));
+    }
+
+    /**
+     * 返回全路径地址
+     *
+     * @param url 数据库存储地址
+     * @return 全路径访问地址
+     */
+    @GetMapping("/returnUrl")
+    public RestResponse<String> returnUrl(String url) {
+
+        return RestResponses.newResponseFromResult(fileService.returnUrl(url));
     }
 }

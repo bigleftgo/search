@@ -204,16 +204,7 @@ public   class  LuceneIndex {
         // 二进制流
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 
-
-        return new ResponseEntity<byte[]>(FileUtils.readFileToByteArray(file), headers, HttpStatus.CREATED);
+        return new ResponseEntity<>(FileUtils.readFileToByteArray(file), headers, HttpStatus.CREATED);
     }
 
-
-
-
-
-    public static void main(String[] args) throws Exception {
-        String idddd=UUID.randomUUID().toString().replace("-","");
-        new LuceneIndex().index("E:\\uploadFile\\2020-09-02\\index\\lucene2","",idddd);
-    }
 }
