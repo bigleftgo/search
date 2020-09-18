@@ -2,7 +2,6 @@ package com.hwkj.search.service.impl;
 
 import com.hwkj.search.bean.Knowledge;
 import com.hwkj.search.service.ILuceneService;
-import com.hwkj.search.utils.DateUtil;
 import com.hwkj.search.utils.DocReadUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.document.Document;
@@ -29,10 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.wltea.analyzer.lucene.IKAnalyzer;
 
-import java.io.File;
-import java.io.StringReader;
 import java.nio.file.Paths;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -61,19 +57,14 @@ public class ILuceneServiceImpl implements ILuceneService {
         String content = DocReadUtil.readWord(k.getPath());
         if (!StringUtils.isEmpty(content)) {
             //建立内容索引
-            document.add(new TextField("desc", content, Field.Store.YES));
+            document.add(new TextField("desc", content, Field.Store.NO));
+            log.info("上传文档内容{}", content);
         }
-        //建立名称索引
+        //根据名称建立名称所对应的值得索引
         if (!k.getNames().isEmpty()) {
-            for (String name : k.getNames()) {
-                //名称是固定的，不需要被分词
-                document.add(new StringField("name", name, Field.Store.YES));
-            }
-        }
-        //建立知识值索引
-        if (!k.getValues().isEmpty()) {
-            for (String value : k.getValues()) {
-                document.add(new TextField("value", value, Field.Store.YES));
+            for (int i = 0; i < k.getNames().size(); i++) {
+                document.add(new TextField(k.getNames().get(i), k.getValues().get(i), Field.Store.YES));
+                log.info("索引key-------->{},索引value-------->{}", k.getNames().get(i), k.getValues().get(i));
             }
         }
         //建立id索引
@@ -86,11 +77,8 @@ public class ILuceneServiceImpl implements ILuceneService {
         //指定索引目录
         try {
             Directory directory = FSDirectory.open(Paths.get(indexPath));
-            //创建分词器
-            IKAnalyzer ikAnalyzer = new IKAnalyzer();
             //添加配置信息
-            IndexWriterConfig conf = new IndexWriterConfig(ikAnalyzer);
-            //
+            IndexWriterConfig conf = new IndexWriterConfig(new IKAnalyzer());
             conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
             IndexWriter indexWriter = new IndexWriter(directory, conf);
             //6 把文档交给IndexWriter
