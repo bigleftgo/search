@@ -14,6 +14,7 @@ import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -25,22 +26,24 @@ import java.util.List;
  */
 public class DocReadUtil {
 
-    public static String readWord(List<String> path) {
-        StringBuilder result = new StringBuilder();
-
+    public static List<String> readWord(List<String> path) {
+        List<String> list = new ArrayList<>();
         try {
             for (String s : path) {
+                StringBuilder result = new StringBuilder();
                 if (s.endsWith(".doc")) {
                     InputStream is = new FileInputStream(s);
                     WordExtractor ex = new WordExtractor(is);
                     result.append(ex.getText());
                     ex.close();
+                    list.add(result.toString());
                 } else if (s.endsWith(".docx")) {
                     InputStream fs = new FileInputStream(s);
                     XWPFDocument xdoc = new XWPFDocument(fs);
                     XWPFWordExtractor extractor = new XWPFWordExtractor(xdoc);
                     result.append(extractor.getText());
                     extractor.close();
+                    list.add(result.toString());
                 } else if (s.endsWith(".xls") || s.endsWith(".xlsx")) {
                     InputStream inp = new FileInputStream(s);
                     HSSFWorkbook wb = new HSSFWorkbook(new POIFSFileSystem(inp));
@@ -49,9 +52,9 @@ public class DocReadUtil {
                     extractor.setIncludeSheetNames(false);
                     String text = extractor.getText();
                     result.append(text);
+                    list.add(result.toString());
                     wb.close();
                 } else if (s.endsWith(".pdf")) {
-                    InputStream inp = new FileInputStream(s);
                     // 新建一个PDF解析器对象
                     PDFParser parser = new PDFParser(new RandomAccessFile(new File(s), "rw"));
                     // 对PDF文件进行解析
@@ -64,11 +67,13 @@ public class DocReadUtil {
                     // 从PDF文档对象中剥离文本
                     String res = stripper.getText(pdfdocument);
                     result.append(res);
+                    list.add(result.toString());
+                    pdfdocument.close();
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return result.toString();
+        return list;
     }
 }

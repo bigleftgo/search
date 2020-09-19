@@ -1,6 +1,7 @@
 package com.hwkj.search.controller;
 
 import com.hwkj.search.bean.Knowledge;
+import com.hwkj.search.bean.Search;
 import com.hwkj.search.common.RestResponse;
 import com.hwkj.search.common.RestResponses;
 import com.hwkj.search.service.ILuceneService;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,14 +39,11 @@ public class LuceneController {
         return RestResponses.newSuccessResponse("索引建立成功",null);
     }
 
-    /**
-     * 查询索引
-     * @param info 查询信息
-     * @return
-     */
+
     @GetMapping("/search")
-    public RestResponse<Map<String,Object>> search(@RequestParam(name = "info") List<String> info){
-        luceneService.search(info);
-        return RestResponses.newSuccessResponse("索引建立成功",null);
+    public RestResponse<Map<String,Object>> search(@RequestParam(name = "info") List<String> info,
+                                                   Search search){
+       Map<String,Object> map =  luceneService.search(info,search);
+        return RestResponses.newSuccessResponse("查询完成",new HashMap<>());
     }
 }

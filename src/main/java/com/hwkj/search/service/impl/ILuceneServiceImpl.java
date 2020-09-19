@@ -1,6 +1,7 @@
 package com.hwkj.search.service.impl;
 
 import com.hwkj.search.bean.Knowledge;
+import com.hwkj.search.bean.Search;
 import com.hwkj.search.service.ILuceneService;
 import com.hwkj.search.utils.DocReadUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -12,24 +13,18 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.Query;
-import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TopDocs;
-import org.apache.lucene.search.highlight.Highlighter;
-import org.apache.lucene.search.highlight.QueryScorer;
-import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.wltea.analyzer.lucene.IKAnalyzer;
 
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * com.hwkj.search.service.impl
@@ -54,11 +49,13 @@ public class ILuceneServiceImpl implements ILuceneService {
         //创建文档对象
         Document document = new Document();
         //获取知识上传的文件内容
-        String content = DocReadUtil.readWord(k.getPath());
-        if (!StringUtils.isEmpty(content)) {
-            //建立内容索引
-            document.add(new TextField("desc", content, Field.Store.NO));
-            log.info("上传文档内容{}", content);
+        List<String> contents = DocReadUtil.readWord(k.getPath());
+        if (!contents.isEmpty()) {
+            for (String content : contents) {
+                //建立内容索引
+                document.add(new TextField("desc", content, Field.Store.NO));
+                log.info("上传文档内容{}", content);
+            }
         }
         //根据名称建立名称所对应的值得索引
         if (!k.getNames().isEmpty()) {
@@ -94,42 +91,31 @@ public class ILuceneServiceImpl implements ILuceneService {
         }
     }
 
-    /**
-     * 查询索引信息
-     *
-     * @param info
-     */
+
     @Override
-    public void search(List<String> info) {
+    public Map<String, Object> search(List<String> info, Search search) {
         try {
+            Map<String, String> m = new HashMap<>();
             //打开索引目录
             Directory directory = FSDirectory.open(Paths.get(indexPath));
             //索引读取工具
             IndexReader reader = DirectoryReader.open(directory);
             //索引搜索工具
             IndexSearcher searcher = new IndexSearcher(reader);
-            //创建多域查询解析器
-            String[] fields = {"desc", "name", "value", "id"};
-            IKAnalyzer ikAnalyzer = new IKAnalyzer();
-            QueryParser queryParser = new MultiFieldQueryParser(fields, ikAnalyzer);
-            for (String text : info) {
-                Query query = queryParser.parse(text);
-                SimpleHTMLFormatter simpleHTMLFormatter = new SimpleHTMLFormatter("<span style='color:#FF0000; background-color:#FFFF00'>", "</span>");
-                //高亮
-                Highlighter highlighter = new Highlighter(simpleHTMLFormatter, new QueryScorer(query));
-                TopDocs topDocs = searcher.search(query, 10);
-                if (topDocs != null && topDocs.totalHits.value != 0) {
-                    ScoreDoc[] docs = topDocs.scoreDocs;
-                    Document docMatched = null;
-                    for (int i = 0; i < docs.length; i++) {
-                        docMatched = searcher.doc(docs[i].doc);
-                        System.out.println(docMatched);
-                    }
-                }
-                log.info("查询到的数量{}", topDocs.totalHits.value);
+            //创建查询解析器
+            IKAnalyzer analyzer = new IKAnalyzer();
+            for (String s : info) {
+                //指定查询的域
+                QueryParser queryParser = new QueryParser(search.getKey(),analyzer);
+                //创建查询对象
+                queryParser.parse(search.getValue());
             }
+//            searcher.search()
         } catch (Exception e) {
-            log.error("查询失败------>{}", e.getMessage());
+            log.error("索引查询失败{}", e.getMessage());
         }
+        return null;
     }
+
+
 }
