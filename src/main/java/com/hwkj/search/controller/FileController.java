@@ -103,15 +103,4 @@ public class FileController {
         return RestResponses.newResponseFromResult(fileService.breakpointResumeUpload(param, request));
     }
 
-    /**
-     * 返回全路径地址
-     *
-     * @param url 数据库存储地址
-     * @return 全路径访问地址
-     */
-    @GetMapping("/returnUrl")
-    public RestResponse<String> returnUrl(String url) {
-
-        return RestResponses.newResponseFromResult(fileService.returnUrl(url));
-    }
 }

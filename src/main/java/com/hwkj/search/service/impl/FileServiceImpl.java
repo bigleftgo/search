@@ -145,14 +145,4 @@ public class FileServiceImpl implements IFileService {
         return Results.newFailResult(ErrorCode.FILE_UPLOAD, "上传失败");
     }
 
-    /**
-     * 返回路径
-     *
-     * @param url
-     * @return
-     */
-    @Override
-    public Result<String> returnUrl(String url) {
-        return Results.newSuccessResult(http + savePath + File.separator + url);
-    }
 }

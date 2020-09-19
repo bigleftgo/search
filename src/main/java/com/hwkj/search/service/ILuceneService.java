@@ -2,6 +2,8 @@ package com.hwkj.search.service;
 
 import com.hwkj.search.bean.Knowledge;
 import com.hwkj.search.bean.Search;
+import com.hwkj.search.common.Result;
+import com.hwkj.search.vo.SearchVo;
 
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,6 @@ public interface ILuceneService {
     void createIndex(Knowledge k);
 
 
-    Map<String, Object> search(List<String> info, Search search);
+    Result<List<SearchVo>> search(List<Search> search);
 
 }
