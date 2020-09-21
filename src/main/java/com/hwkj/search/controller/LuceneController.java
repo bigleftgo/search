@@ -2,9 +2,8 @@ package com.hwkj.search.controller;
 
 import com.hwkj.search.bean.Knowledge;
 import com.hwkj.search.bean.Search;
-import com.hwkj.search.common.RestResponse;
-import com.hwkj.search.common.RestResponses;
-import com.hwkj.search.common.Result;
+import com.hwkj.search.common.*;
+import com.hwkj.search.config.SystemException;
 import com.hwkj.search.service.ILuceneService;
 import com.hwkj.search.vo.SearchVo;
 import lombok.extern.slf4j.Slf4j;
@@ -30,20 +29,24 @@ public class LuceneController {
     /**
      * 创建索引
      *
-     * @param knowledge 知识bean
+     * @param k 知识bean
      * @return
      */
     @PostMapping("/index")
-    public RestResponse<String> creatIndex(@RequestBody Knowledge knowledge) {
+    public RestResponse<String> creatIndex(@RequestBody Knowledge k) {
         //根据文件path去服务器找文件信息
-        luceneService.createIndex(knowledge);
+        luceneService.createIndex(k);
         return RestResponses.newSuccessResponse("索引建立成功", null);
     }
 
 
     @PostMapping("/search")
     public RestResponse<Result<List<SearchVo>>> search(@RequestBody List<Search> search) {
+        try {
         Result<List<SearchVo>> result = luceneService.search(search);
-        return RestResponses.newSuccessResponse("查询完成", result);
+            return RestResponses.newSuccessResponse("查询完成", result);
+        } catch (Exception e) {
+            return RestResponses.newSuccessResponse("系统错误，请联系管理员", null);
+        }
     }
 }

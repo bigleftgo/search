@@ -23,6 +23,6 @@ public interface ILuceneService {
     void createIndex(Knowledge k);
 
 
-    Result<List<SearchVo>> search(List<Search> search);
+    Result<List<SearchVo>> search(List<Search> search) throws Exception;
 
 }

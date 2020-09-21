@@ -1,5 +1,6 @@
 package com.hwkj.search.vo;
 
+import com.hwkj.search.bean.Search;
 import lombok.Data;
 
 /**
@@ -22,4 +23,16 @@ public class SearchVo {
      * 高亮内容
      */
     private String desc;
+    /**
+     * 文件id
+     */
+    private String fileId;
+    /**
+     * 查询关键字
+     */
+    private Search search;
+    /**
+     * 知识描述
+     */
+    private String k_des;
 }

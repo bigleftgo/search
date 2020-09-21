@@ -10,6 +10,7 @@ import org.apache.poi.hwpf.extractor.WordExtractor;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,6 +26,7 @@ import java.util.List;
  * @CreateTime 2020/9/15 17:34
  */
 public class DocReadUtil {
+    private static String savePath = "D:\\HanWei\\数据访问服务20.07.16\\resouce\\Knowledge\\file-manager";
 
     public static List<String> readWord(List<String> path) {
         List<String> list = new ArrayList<>();
@@ -32,20 +34,20 @@ public class DocReadUtil {
             for (String s : path) {
                 StringBuilder result = new StringBuilder();
                 if (s.endsWith(".doc")) {
-                    InputStream is = new FileInputStream(s);
+                    InputStream is = new FileInputStream(savePath + s);
                     WordExtractor ex = new WordExtractor(is);
                     result.append(ex.getText());
                     ex.close();
                     list.add(result.toString());
                 } else if (s.endsWith(".docx")) {
-                    InputStream fs = new FileInputStream(s);
+                    InputStream fs = new FileInputStream(savePath + s);
                     XWPFDocument xdoc = new XWPFDocument(fs);
                     XWPFWordExtractor extractor = new XWPFWordExtractor(xdoc);
                     result.append(extractor.getText());
                     extractor.close();
                     list.add(result.toString());
                 } else if (s.endsWith(".xls") || s.endsWith(".xlsx")) {
-                    InputStream inp = new FileInputStream(s);
+                    InputStream inp = new FileInputStream(savePath + s);
                     HSSFWorkbook wb = new HSSFWorkbook(new POIFSFileSystem(inp));
                     ExcelExtractor extractor = new ExcelExtractor(wb);
                     extractor.setFormulasNotResults(true);
@@ -56,7 +58,7 @@ public class DocReadUtil {
                     wb.close();
                 } else if (s.endsWith(".pdf")) {
                     // 新建一个PDF解析器对象
-                    PDFParser parser = new PDFParser(new RandomAccessFile(new File(s), "rw"));
+                    PDFParser parser = new PDFParser(new RandomAccessFile(new File(savePath + s), "rw"));
                     // 对PDF文件进行解析
                     parser.parse();
                     // 获取解析后得到的PDF文档对象

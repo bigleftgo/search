@@ -8,6 +8,10 @@ spring:
     multipart:
       max-file-size: 50MB
       max-request-size: 50MB
+  data:
+    solr:
+      host: http://loaclhost:8011/solr/core_knowledge
+#配置solr服务地址
 file:
 # 文件存储路径
   save-path: D:\HanWei\数据访问服务20.07.16\resouce\Knowledge\file-manager
@@ -17,3 +21,5 @@ file:
   index-path: E:\index
 md5:
   secure: d1WiQHyKnJb&Iels
+
+

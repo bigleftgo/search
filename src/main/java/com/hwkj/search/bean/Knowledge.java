@@ -16,7 +16,7 @@ public class Knowledge {
     /**
      * id
      */
-    private List<Integer> ids;
+    private List<String> ids;
     /**
      * 各个字段名
      */
