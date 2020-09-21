@@ -76,9 +76,18 @@ public class ILuceneServiceImpl implements ILuceneService {
         if (!k.getIds().isEmpty()) {
             for (String id : k.getIds()) {
                 document.add(new StringField("id", id, Field.Store.YES));
+                log.info("id---------->{}", id);
+
             }
         }
-
+        //建立tag
+        if (!StringUtils.isEmpty(k.getTag())) {
+            String[] tags = k.getTag().split(",");
+            for (String tag : tags) {
+                document.add(new StringField("tag", tag, Field.Store.YES));
+                log.info("tag---------->{}", tag);
+            }
+        }
         //指定索引目录
         try {
             Directory directory = FSDirectory.open(Paths.get(indexPath));
@@ -101,7 +110,7 @@ public class ILuceneServiceImpl implements ILuceneService {
 
 
     @Override
-    public Result<List<SearchVo>> search(List<Search> search) throws Exception {
+    public List<SearchVo> search(List<Search> search) throws Exception {
         //打开索引目录
         Directory directory = FSDirectory.open(Paths.get(indexPath));
         //索引读取工具
@@ -138,25 +147,17 @@ public class ILuceneServiceImpl implements ILuceneService {
                 ScoreDoc[] scoreDocs = docs.scoreDocs;
                 if (scoreDocs != null) {
                     for (int i = 0; i < scoreDocs.length; i++) {
-                        ScoreDoc doc = scoreDocs[i];
                         SearchVo vo = new SearchVo();
                         //通过文档id读取id，获取查询到的文档标识，这个标识是lucene创建文档的时候为我们分配的唯一标识，与我们自己的id不一样
-                        Document document = searcher.doc(doc.doc);
+                        Document document = searcher.doc(scoreDocs[i].doc);
                         //获取高亮显示内容
                         String desc = highlighter.getBestFragment(analyzer, "desc", document.get("desc"));
-                        //获取文件名称
-                        String sjmc = document.get("sjmc");
-                        //获取设计人
-                        String sjr = document.get("sjr");
-                        //获取文件id
-                        String id = document.get("id");
-                        //获取知识描述
-                        String zsms = document.get("zsms");
                         vo.setDesc(desc);
-                        vo.setSjr(sjr);
-                        vo.setTitle(sjmc);
-                        vo.setFileId(id);
-                        vo.setK_des(zsms);
+                        vo.setSjr(document.get("gysjsjr"));
+                        vo.setTitle(document.get("gysjsjmc"));
+                        vo.setFileId(document.get("id"));
+                        vo.setK_des(document.get("zsms"));
+                        vo.setSource(document.get("sjdw"));
                         //插入关键字
                         vo.setSearch(s);
                         vos.add(vo);
@@ -164,9 +165,9 @@ public class ILuceneServiceImpl implements ILuceneService {
                     }
                 }
             }
-            return Results.newSuccessResult(vos);
+            return vos;
         } else {
-            return Results.newFailResult(ErrorCode.SYSTEM_ERROR, "查询参数为空，请正确输入查询参数");
+            return null;
         }
     }
 

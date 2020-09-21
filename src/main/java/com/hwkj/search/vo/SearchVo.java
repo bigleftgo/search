@@ -35,4 +35,8 @@ public class SearchVo {
      * 知识描述
      */
     private String k_des;
+    /**
+     * 来源
+     */
+    private String source;
 }

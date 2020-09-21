@@ -70,17 +70,6 @@ public class RestResponses {
     /**
      * 创建一个Http请求,操作失败的返回结果对象
      *
-     * @param description 请求结果描述
-     * @param errorCode   错误代码
-     * @return
-     */
-    public static <T> RestResponse<T> newFailResponse(String description, ErrorCode errorCode) {
-        return newResponse(errorCode.getCode(), description, null, null);
-    }
-
-    /**
-     * 创建一个Http请求,操作失败的返回结果对象
-     *
      * @param errorCode 错误代码
      * @return
      */

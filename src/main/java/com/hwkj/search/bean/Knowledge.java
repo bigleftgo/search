@@ -29,4 +29,8 @@ public class Knowledge {
      * 文档地址
      */
     private List<String> path;
+    /**
+     * 标签
+     */
+    private String tag;
 }

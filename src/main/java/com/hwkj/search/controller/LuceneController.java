@@ -7,6 +7,7 @@ import com.hwkj.search.config.SystemException;
 import com.hwkj.search.service.ILuceneService;
 import com.hwkj.search.vo.SearchVo;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,9 +42,9 @@ public class LuceneController {
 
 
     @PostMapping("/search")
-    public RestResponse<Result<List<SearchVo>>> search(@RequestBody List<Search> search) {
+    public RestResponse<List<SearchVo>> search(@RequestBody List<Search> search) {
         try {
-        Result<List<SearchVo>> result = luceneService.search(search);
+            List<SearchVo> result = luceneService.search(search);
             return RestResponses.newSuccessResponse("查询完成", result);
         } catch (Exception e) {
             return RestResponses.newSuccessResponse("系统错误，请联系管理员", null);
