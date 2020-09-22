@@ -1,5 +1,6 @@
 package com.hwkj.search.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.io.RandomAccessFile;
 import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -11,6 +12,7 @@ import org.apache.poi.poifs.filesystem.POIFSFileSystem;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.springframework.beans.factory.annotation.Value;
+import sun.rmi.runtime.Log;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,8 +27,9 @@ import java.util.List;
  * @author Lenovo
  * @CreateTime 2020/9/15 17:34
  */
+@Slf4j
 public class DocReadUtil {
-    private static String savePath = "D:\\HanWei\\数据访问服务20.07.16\\resouce\\Knowledge\\file-manager";
+    private static final String savePath = "D:\\HanWei\\数据访问服务20.07.16\\resouce\\Knowledge\\file-manager";
 
     public static List<String> readWord(List<String> path) {
         List<String> list = new ArrayList<>();
@@ -34,7 +37,8 @@ public class DocReadUtil {
             for (String s : path) {
                 StringBuilder result = new StringBuilder();
                 if (s.endsWith(".doc")) {
-                    InputStream is = new FileInputStream(savePath + s);
+                    log.info("path is :{}", savePath + s);
+                    FileInputStream is = new FileInputStream(savePath + s);
                     WordExtractor ex = new WordExtractor(is);
                     result.append(ex.getText());
                     ex.close();

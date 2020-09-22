@@ -32,5 +32,5 @@ public class Knowledge {
     /**
      * 标签
      */
-    private String tag;
+    private String zsbq;
 }

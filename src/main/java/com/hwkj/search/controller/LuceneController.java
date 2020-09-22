@@ -34,7 +34,7 @@ public class LuceneController {
      * @return
      */
     @PostMapping("/index")
-    public RestResponse<String> creatIndex(@RequestBody Knowledge k) {
+    public RestResponse<String> creatIndex(@RequestBody List<Knowledge> k) {
         //根据文件path去服务器找文件信息
         luceneService.createIndex(k);
         return RestResponses.newSuccessResponse("索引建立成功", null);

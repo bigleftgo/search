@@ -20,7 +20,7 @@ public interface ILuceneService {
      * 创建索引
      * @param k
      */
-    void createIndex(Knowledge k);
+    void createIndex(List<Knowledge> k);
 
 
     List<SearchVo> search(List<Search> search) throws Exception;

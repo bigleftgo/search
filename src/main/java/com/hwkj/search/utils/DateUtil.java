@@ -824,16 +824,5 @@ public class DateUtil{
         return c.getTime();
     }
 
- /*
-    public static void main(String [] args){
-        try {
-            DateUtil dateUtil = new DateUtil();
-            System.out.println();
-
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
-
-    }  */
 
 }
