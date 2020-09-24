@@ -2,14 +2,17 @@ package com.hwkj.search.controller;
 
 import com.hwkj.search.bean.Knowledge;
 import com.hwkj.search.bean.Search;
-import com.hwkj.search.common.*;
-import com.hwkj.search.config.SystemException;
+import com.hwkj.search.common.ErrorCode;
+import com.hwkj.search.common.RestResponse;
+import com.hwkj.search.common.RestResponses;
 import com.hwkj.search.service.ILuceneService;
 import com.hwkj.search.vo.SearchVo;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -36,8 +39,12 @@ public class LuceneController {
     @PostMapping("/index")
     public RestResponse<String> creatIndex(@RequestBody List<Knowledge> k) {
         //根据文件path去服务器找文件信息
-        luceneService.createIndex(k);
-        return RestResponses.newSuccessResponse("索引建立成功", null);
+        try {
+            luceneService.createIndex(k);
+            return RestResponses.newSuccessResponse("索引创建成功", null);
+        } catch (Exception e) {
+            return RestResponses.newFailResponse(ErrorCode.INDEX_FAILURE);
+        }
     }
 
 
@@ -47,7 +54,7 @@ public class LuceneController {
             List<SearchVo> result = luceneService.search(search);
             return RestResponses.newSuccessResponse("查询完成", result);
         } catch (Exception e) {
-            return RestResponses.newSuccessResponse("系统错误，请联系管理员", null);
+            return RestResponses.newSuccessResponse("未查询到相关信息", null);
         }
     }
 }

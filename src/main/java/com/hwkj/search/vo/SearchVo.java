@@ -1,6 +1,5 @@
 package com.hwkj.search.vo;
 
-import com.hwkj.search.bean.Search;
 import lombok.Data;
 
 /**

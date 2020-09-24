@@ -27,6 +27,8 @@ import org.wltea.analyzer.lucene.IKAnalyzer;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * com.hwkj.search.service.impl
@@ -41,8 +43,6 @@ public class ILuceneServiceImpl implements ILuceneService {
     @Value("${file.index-path}")
     private String indexPath;
 
-    //每页显示20条数据
-    private final Integer PAGE_SIZE = 20;
 
     /**
      * 创建索引
@@ -50,18 +50,20 @@ public class ILuceneServiceImpl implements ILuceneService {
      * @param k
      */
     @Override
-    public void createIndex(List<Knowledge> k) {
+    public void createIndex(List<Knowledge> k) throws Exception {
         List<Document> list = new ArrayList<>();
         for (Knowledge knowledge : k) {
             //创建文档对象
             Document document = new Document();
             //获取知识上传的文件内容
-            List<String> contents = DocReadUtil.readWord(knowledge.getPath());
-            if (!contents.isEmpty()) {
-                for (String content : contents) {
-                    //建立内容索引
-                    document.add(new TextField("desc", content, Field.Store.YES));
-                    log.info("上传文档内容{}", content);
+            if (!StringUtils.isEmpty(knowledge.getPath())) {
+                List<String> contents = DocReadUtil.readWord(knowledge.getPath());
+                if (!contents.isEmpty()) {
+                    for (String content : contents) {
+                        //建立内容索引
+                        document.add(new TextField("desc", content, Field.Store.YES));
+                        log.info("上传文档内容{}", content);
+                    }
                 }
             }
             //根据名称建立名称所对应的值得索引
@@ -91,22 +93,20 @@ public class ILuceneServiceImpl implements ILuceneService {
             list.add(document);
         }
         //指定索引目录
-        try {
-            Directory directory = FSDirectory.open(Paths.get(indexPath));
-            //添加配置信息
-            IndexWriterConfig conf = new IndexWriterConfig(new IKAnalyzer());
-            conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
-            IndexWriter indexWriter = new IndexWriter(directory, conf);
-            //6 把文档交给IndexWriter
-            indexWriter.addDocuments(list);
-            //7 提交
-            indexWriter.commit();
-            //8 关闭
-            indexWriter.close();
-            log.info("索引信息：{}", list.toString());
-        } catch (Exception e) {
-            log.error("创建索引失败" + e);
-        }
+
+        Directory directory = FSDirectory.open(Paths.get(indexPath));
+        //添加配置信息
+        IndexWriterConfig conf = new IndexWriterConfig(new IKAnalyzer());
+        conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        IndexWriter indexWriter = new IndexWriter(directory, conf);
+        //6 把文档交给IndexWriter
+        indexWriter.addDocuments(list);
+        //7 提交
+        indexWriter.commit();
+        //8 关闭
+        indexWriter.close();
+        log.info("索引信息：{}", list.toString());
+
     }
 
 
@@ -127,16 +127,43 @@ public class ILuceneServiceImpl implements ILuceneService {
             for (Search s : search) {
                 //指定查询的域
                 QueryParser queryParser = new QueryParser(s.getKey(), analyzer);
-                //创建查询对象
-                Query query;
-                if (StringUtils.isEmpty(s.getValue())) {
-                    //如果值为null，则查询所有
-                    query = queryParser.parse("*:*");
-                } else {
-                    query = queryParser.parse(s.getValue());
+                Query query1;
+                Query query2;
+                Query query3;
+                Query query4;
+                //如果存在日期值，那么将这个日期范围下面的所有范围内信息查出来。
+                if (!StringUtils.isEmpty(s.getStartTime()) && !StringUtils.isEmpty(s.getEndTime())) {
+                    query2 = queryParser.parse("gysjrq:[" + s.getStartTime() + "to" + s.getEndTime() + "]");
+                    query3 = queryParser.parse("dzsjrq:[" + s.getStartTime() + "to" + s.getEndTime() + "]");
+                    query4 = queryParser.parse("sgsjrq:[" + s.getStartTime() + "to" + s.getEndTime() + "]");
+                    builder.add(query2, BooleanClause.Occur.MUST);
+                    builder.add(query3, BooleanClause.Occur.MUST);
+                    builder.add(query4, BooleanClause.Occur.MUST);
                 }
-                //将每一个参数都放入到组合查询中
-                builder.add(query, BooleanClause.Occur.SHOULD);
+                //如果状态为should，那么使用“或”关系拼接
+                if (s.getStatus().equalsIgnoreCase("should")) {
+                    //创建查询对象
+                    if (StringUtils.isEmpty(s.getValue())) {
+                        //如果值为null，则查询所有
+                        query1 = queryParser.parse("*:*");
+                    } else {
+                        query1 = queryParser.parse(s.getValue());
+                    }
+                    //将每一个参数都放入到组合查询中
+                    builder.add(query1, BooleanClause.Occur.SHOULD);
+                }
+                //如果状态为must，那么用“且”关系拼接
+                if (s.getStatus().equalsIgnoreCase("must")) {
+                    //创建查询对象
+                    if (StringUtils.isEmpty(s.getValue())) {
+                        //如果值为null，则查询所有
+                        query1 = queryParser.parse("*:*");
+                    } else {
+                        query1 = queryParser.parse(s.getValue());
+                    }
+                    //将每一个参数都放入到组合查询中
+                    builder.add(query1, BooleanClause.Occur.MUST);
+                }
             }
             //第二个参数返回多少条数据
             long start = System.currentTimeMillis();
@@ -157,8 +184,10 @@ public class ILuceneServiceImpl implements ILuceneService {
                     //通过文档id读取id，获取查询到的文档标识，这个标识是lucene创建文档的时候为我们分配的唯一标识，与我们自己的id不一样
                     Document document = searcher.doc(scoreDocs[i].doc);
                     //获取高亮显示内容
-                    String desc = highlighter.getBestFragment(analyzer, "desc", document.get("desc"));
-                    vo.setDesc(desc);
+                    if (document.get("desc") != null) {
+                        String desc = highlighter.getBestFragment(analyzer, "desc", document.get("desc"));
+                        vo.setDesc(desc);
+                    }
                     //插入设计人
                     vo.setGysjsjr(document.get("gysjsjr"));
                     vo.setDzsjsjr(document.get("dzsjsjr"));
@@ -169,6 +198,7 @@ public class ILuceneServiceImpl implements ILuceneService {
                     vo.setSgsjsjmc(document.get("sgsjsjmc"));
                     vo.setFileId(document.get("id"));
                     vo.setK_des(document.get("zsms"));
+
                     //插入设计单位
                     vo.setGysjsjdw(document.get("gysjsjdw"));
                     vo.setDzsjsjdw(document.get("dzsjsjdw"));
@@ -187,6 +217,7 @@ public class ILuceneServiceImpl implements ILuceneService {
                     log.info("search vo is {}", vo);
                 }
             }
+
             return vos;
         } else {
             return null;
