@@ -7,9 +7,7 @@ import com.hwkj.search.common.RestResponses;
 import com.hwkj.search.common.Result;
 import com.hwkj.search.config.SystemException;
 import com.hwkj.search.service.IFileService;
-import com.hwkj.search.utils.EmptyUtils;
 import com.hwkj.search.utils.EncodingUtils;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,19 +57,19 @@ public class FileController {
      * @param response 响应对象
      */
     @GetMapping(value = "/download")
-    public void viewFilesImage(@RequestParam String fileName, HttpServletRequest request, HttpServletResponse response) {
+    public void viewFilesImage(@RequestParam String path,@RequestParam String fileName, HttpServletRequest request, HttpServletResponse response) {
         OutputStream outputStream = null;
         InputStream inputStream = null;
         try {
             //判断文件是否存在
-            Result<File> file = fileService.getFile(fileName);
+            Result<File> file = fileService.getFile(path);
             if (!file.isSuccess()) {
                 throw new SystemException(file.getErrorCode().getCode(), file.getDescription());
             }
 
             //获取输入流
-            inputStream = fileService.getFileInputStream(fileName);
-            response.setHeader("Content-Disposition", "attachment;filename=" + EncodingUtils.convertToFileName(request, file.getData().getName()));
+            inputStream = fileService.getFileInputStream(path,fileName);
+            response.setHeader("Content-Disposition", "attachment;path=" + EncodingUtils.convertToFileName(request, file.getData().getName()));
             // 获取输出流
             outputStream = response.getOutputStream();
             IOUtils.copy(inputStream, outputStream);

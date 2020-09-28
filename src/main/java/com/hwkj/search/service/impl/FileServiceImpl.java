@@ -1,5 +1,6 @@
 package com.hwkj.search.service.impl;
 
+import cn.novelweb.tool.io.FileUtils;
 import cn.novelweb.tool.upload.local.LocalUpload;
 import cn.novelweb.tool.upload.local.pojo.UploadFileParam;
 import com.alibaba.fastjson.JSONObject;
@@ -80,7 +81,7 @@ public class FileServiceImpl implements IFileService {
             // 保存文件信息
             HashMap<String, Object> map = new HashMap<>();
             map.put("path", newFile);
-            map.put("name",newFile.getName());
+            map.put("name", newFile.getName());
             return Results.newSuccessResult(map, "上传完成");
         } catch (Exception e) {
             log.error("上传协议文件出错", e);
@@ -105,14 +106,14 @@ public class FileServiceImpl implements IFileService {
     /**
      * 获取文件流
      *
-     * @param fileName 文件名
+     * @param path 文件名
      * @return
      */
     @Override
-    public InputStream getFileInputStream(String fileName) {
+    public InputStream getFileInputStream(String path, String fileName) {
         try {
             //根据文件名获取本地文件信息
-            File file = new File(savePath + File.separator + fileName);
+            File file = new File(savePath + File.separator + path);
             return new FileInputStream(file);
         } catch (Exception e) {
             log.error("获取文件输入流出错", e);

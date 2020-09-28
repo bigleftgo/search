@@ -3,31 +3,29 @@ package com.hwkj.search.service.impl;
 import com.hwkj.search.bean.Knowledge;
 import com.hwkj.search.bean.Search;
 import com.hwkj.search.service.ILuceneService;
+import com.hwkj.search.utils.DateUtil;
 import com.hwkj.search.utils.DocReadUtil;
 import com.hwkj.search.vo.SearchVo;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.StringField;
-import org.apache.lucene.document.TextField;
-import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
+import org.apache.lucene.document.*;
+import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.QueryParser;
+import org.apache.lucene.queryparser.xml.builders.RangeQueryBuilder;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.highlight.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+import org.apache.poi.util.LongField;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.wltea.analyzer.lucene.IKAnalyzer;
 
+import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -50,7 +48,7 @@ public class ILuceneServiceImpl implements ILuceneService {
      * @param k
      */
     @Override
-    public void createIndex(List<Knowledge> k) throws Exception {
+    public void createIndex(List<Knowledge> k) throws IOException {
         List<Document> list = new ArrayList<>();
         for (Knowledge knowledge : k) {
             //创建文档对象
@@ -69,7 +67,23 @@ public class ILuceneServiceImpl implements ILuceneService {
             //根据名称建立名称所对应的值得索引
             if (!knowledge.getNames().isEmpty()) {
                 for (int i = 0; i < knowledge.getNames().size(); i++) {
-                    document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    if (knowledge.getNames().get(i).equals("zzmc")) {
+                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    } else if (knowledge.getNames().get(i).equals("gysjrq")) {
+                        Date date = DateUtil.parseStrToDate(knowledge.getValues().get(i), "yyyy-MM-dd");
+                        document.add(new LongPoint(knowledge.getNames().get(i), date.getTime()));
+                        document.add(new StoredField(knowledge.getNames().get(i), date.getTime()));
+                    } else if (knowledge.getNames().get(i).equals("dzsjrq")) {
+                        Date date = DateUtil.parseStrToDate(knowledge.getValues().get(i), "yyyy-MM-dd");
+                        document.add(new LongPoint(knowledge.getNames().get(i), date.getTime()));
+                        document.add(new StoredField(knowledge.getNames().get(i), date.getTime()));
+                    } else if (knowledge.getNames().get(i).equals("sgsjrq")) {
+                        Date date = DateUtil.parseStrToDate(knowledge.getValues().get(i), "yyyy-MM-dd");
+                        document.add(new LongPoint(knowledge.getNames().get(i), date.getTime()));
+                        document.add(new StoredField(knowledge.getNames().get(i), date.getTime()));
+                    } else {
+                        document.add(new StringField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    }
                     log.info("索引key-------->{},索引value-------->{}", knowledge.getNames().get(i), knowledge.getValues().get(i));
                 }
             }
@@ -89,14 +103,13 @@ public class ILuceneServiceImpl implements ILuceneService {
                     log.info("tag---------->{}", tag);
                 }
             }
-
             list.add(document);
         }
         //指定索引目录
 
         Directory directory = FSDirectory.open(Paths.get(indexPath));
         //添加配置信息
-        IndexWriterConfig conf = new IndexWriterConfig(new IKAnalyzer());
+        IndexWriterConfig conf = new IndexWriterConfig(new SmartChineseAnalyzer());
         conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
         IndexWriter indexWriter = new IndexWriter(directory, conf);
         //6 把文档交给IndexWriter
@@ -106,10 +119,14 @@ public class ILuceneServiceImpl implements ILuceneService {
         //8 关闭
         indexWriter.close();
         log.info("索引信息：{}", list.toString());
-
     }
 
-
+    /**
+     * 查询索引
+     * @param search 查询对象
+     * @return
+     * @throws Exception
+     */
     @Override
     public List<SearchVo> search(List<Search> search) throws Exception {
         //打开索引目录
@@ -119,60 +136,59 @@ public class ILuceneServiceImpl implements ILuceneService {
         //索引搜索工具
         IndexSearcher searcher = new IndexSearcher(reader);
         //创建查询解析器
-        IKAnalyzer analyzer = new IKAnalyzer();
+//        IKAnalyzer analyzer = new IKAnalyzer();
+        SmartChineseAnalyzer analyzer = new SmartChineseAnalyzer();
         if (!search.isEmpty()) {
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
             List<SearchVo> vos = new ArrayList<>();
             //创建组合查询对象
-            BooleanQuery.Builder builder = new BooleanQuery.Builder();
             for (Search s : search) {
                 //指定查询的域
-                QueryParser queryParser = new QueryParser(s.getKey(), analyzer);
                 Query query1;
                 Query query2;
                 Query query3;
                 Query query4;
-                //如果存在日期值，那么将这个日期范围下面的所有范围内信息查出来。
-                if (!StringUtils.isEmpty(s.getStartTime()) && !StringUtils.isEmpty(s.getEndTime())) {
-                    query2 = queryParser.parse("gysjrq:[" + s.getStartTime() + "to" + s.getEndTime() + "]");
-                    query3 = queryParser.parse("dzsjrq:[" + s.getStartTime() + "to" + s.getEndTime() + "]");
-                    query4 = queryParser.parse("sgsjrq:[" + s.getStartTime() + "to" + s.getEndTime() + "]");
-                    builder.add(query2, BooleanClause.Occur.MUST);
-                    builder.add(query3, BooleanClause.Occur.MUST);
-                    builder.add(query4, BooleanClause.Occur.MUST);
-                }
+                Query query5;
                 //如果状态为should，那么使用“或”关系拼接
                 if (s.getStatus().equalsIgnoreCase("should")) {
-                    //创建查询对象
-                    if (StringUtils.isEmpty(s.getValue())) {
-                        //如果值为null，则查询所有
-                        query1 = queryParser.parse("*:*");
+                    if (s.getKey().equals("sjrq")) {
+                        Date start = DateUtil.parseStrToDate(s.getStartTime(), "yyyy-MM-dd");
+                        Date end = DateUtil.parseStrToDate(s.getEndTime(), "yyyy-MM-dd");
+                        query3 = LongPoint.newRangeQuery("gysjrq", start.getTime(), end.getTime());
+                        query4 = LongPoint.newRangeQuery("dzsjrq", start.getTime(), end.getTime());
+                        query5 = LongPoint.newRangeQuery("sgsjrq", start.getTime(), end.getTime());
+                        builder.add(query3, BooleanClause.Occur.SHOULD);
+                        builder.add(query4, BooleanClause.Occur.SHOULD);
+                        builder.add(query5, BooleanClause.Occur.SHOULD);
                     } else {
-                        query1 = queryParser.parse(s.getValue());
+                        //创建查询对象
+                        query1 = new TermQuery(new Term(s.getKey(), s.getValue()));
+                        //将每一个参数都放入到组合查询中
+                        builder.add(query1, BooleanClause.Occur.SHOULD);
                     }
-                    //将每一个参数都放入到组合查询中
-                    builder.add(query1, BooleanClause.Occur.SHOULD);
                 }
                 //如果状态为must，那么用“且”关系拼接
                 if (s.getStatus().equalsIgnoreCase("must")) {
-                    //创建查询对象
-                    if (StringUtils.isEmpty(s.getValue())) {
-                        //如果值为null，则查询所有
-                        query1 = queryParser.parse("*:*");
+                    if (s.getKey().equalsIgnoreCase("zzmc")) {
+                        query2 = new FuzzyQuery(new Term(s.getKey(), s.getValue()));
+                        builder.add(query2, BooleanClause.Occur.MUST);
                     } else {
-                        query1 = queryParser.parse(s.getValue());
+                        query1 = new TermQuery(new Term(s.getKey(), s.getValue()));
+                        //将每一个参数都放入到组合查询中
+                        builder.add(query1, BooleanClause.Occur.MUST);
                     }
-                    //将每一个参数都放入到组合查询中
-                    builder.add(query1, BooleanClause.Occur.MUST);
                 }
             }
             //第二个参数返回多少条数据
             long start = System.currentTimeMillis();
+//            Sort sort = new Sort();
+//            sort.setSort(new SortField("sjrq", SortField.Type.LONG,true));
             TopDocs docs = searcher.search(builder.build(), 20);
             long end = System.currentTimeMillis();
             log.info("匹配" + search.toString() + "，共花费" + (end - start) + "毫秒" + "查询到" + docs.totalHits + "条数据");
             QueryScorer scorer = new QueryScorer(builder.build());
             //第二个参数是返回页面的限制显示字数，默认为100
-            Fragmenter fragmenter = new SimpleSpanFragmenter(scorer, 200);
+            Fragmenter fragmenter = new SimpleSpanFragmenter(scorer, 150);
             SimpleHTMLFormatter simpleHTMLFormatter = new SimpleHTMLFormatter("<b><font color='red'>", "</font></b>");
             Highlighter highlighter = new Highlighter(simpleHTMLFormatter, scorer);
             highlighter.setTextFragmenter(fragmenter);
@@ -214,15 +230,15 @@ public class ILuceneServiceImpl implements ILuceneService {
                     vo.setSgsjlx(document.get("sgsjlx"));
 
                     vos.add(vo);
-                    log.info("search vo is {}", vo);
                 }
             }
-
+            log.info("search vo is {}", vos);
             return vos;
         } else {
             return null;
         }
     }
-
-
 }
+
+
+

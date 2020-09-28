@@ -21,8 +21,12 @@ public interface ILuceneService {
      * @param k
      */
     void createIndex(List<Knowledge> k) throws Exception;
-
-
+    /**
+     * 查询索引
+     * @param search
+     * @return
+     * @throws Exception
+     */
     List<SearchVo> search(List<Search> search) throws Exception;
 
 }

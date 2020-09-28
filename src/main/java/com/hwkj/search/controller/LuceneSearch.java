@@ -171,7 +171,7 @@ public class LuceneSearch extends SpringBootServletInitializer {
         SimpleHTMLFormatter simpleHTMLFormatter = new SimpleHTMLFormatter("<span style='color:#FF0000; background-color:#FFFF00'>", "</span>");
         Highlighter highlighter = new Highlighter(simpleHTMLFormatter, new QueryScorer(query));
         TopDocs hits = searcher.search(query, 10000);
-        if (hits != null && hits.totalHits.value > 0) {
+        if (hits != null && hits.totalHits > 0) {
             ScoreDoc[] sDocs = hits.scoreDocs;
             Document docMatched = null;
             for (int j = 0; j < sDocs.length; j++) {

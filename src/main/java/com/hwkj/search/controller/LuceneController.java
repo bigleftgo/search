@@ -43,7 +43,7 @@ public class LuceneController {
             luceneService.createIndex(k);
             return RestResponses.newSuccessResponse("索引创建成功", null);
         } catch (Exception e) {
-            return RestResponses.newFailResponse(ErrorCode.INDEX_FAILURE);
+            return RestResponses.newFailResponse(ErrorCode.INDEX_FAILURE,"文件被损坏"+e.getMessage());
         }
     }
 
