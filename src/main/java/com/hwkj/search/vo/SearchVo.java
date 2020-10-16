@@ -1,5 +1,6 @@
 package com.hwkj.search.vo;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 /**
@@ -87,5 +88,10 @@ public class SearchVo {
      * 施工设计类型
      */
     private String sgsjlx;
+    /**
+     * 措施类型
+     */
+    private String cslx;
+
 
 }

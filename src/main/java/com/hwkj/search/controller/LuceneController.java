@@ -1,7 +1,9 @@
 package com.hwkj.search.controller;
 
 import com.hwkj.search.bean.Knowledge;
+import com.hwkj.search.bean.QueryParam;
 import com.hwkj.search.bean.Search;
+import com.hwkj.search.bean.SearchParam;
 import com.hwkj.search.common.ErrorCode;
 import com.hwkj.search.common.RestResponse;
 import com.hwkj.search.common.RestResponses;
@@ -49,9 +51,9 @@ public class LuceneController {
 
 
     @PostMapping("/search")
-    public RestResponse<List<SearchVo>> search(@RequestBody List<Search> search) {
+    public RestResponse<List<SearchVo>> search(@RequestBody(required = false) SearchParam searchParam) {
         try {
-            List<SearchVo> result = luceneService.search(search);
+            List<SearchVo> result = luceneService.search(searchParam);
             return RestResponses.newSuccessResponse("查询完成", result);
         } catch (Exception e) {
             return RestResponses.newSuccessResponse("未查询到相关信息", null);

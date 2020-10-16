@@ -1,8 +1,10 @@
 package com.hwkj.search.service.impl;
 
-import com.hwkj.search.bean.Knowledge;
-import com.hwkj.search.bean.Search;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.hwkj.search.bean.*;
 import com.hwkj.search.service.ILuceneService;
+import com.hwkj.search.service.IProKnowledgeService;
+import com.hwkj.search.service.IRmDocumentService;
 import com.hwkj.search.utils.DateUtil;
 import com.hwkj.search.utils.DocReadUtil;
 import com.hwkj.search.vo.SearchVo;
@@ -11,22 +13,20 @@ import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
 import org.apache.lucene.document.*;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.queryparser.xml.builders.RangeQueryBuilder;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.highlight.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.apache.poi.util.LongField;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-import org.wltea.analyzer.lucene.IKAnalyzer;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 /**
  * com.hwkj.search.service.impl
@@ -40,6 +40,12 @@ public class ILuceneServiceImpl implements ILuceneService {
 
     @Value("${file.index-path}")
     private String indexPath;
+
+    @Autowired
+    private IProKnowledgeService proKnowledgeService;
+
+    @Autowired
+    private IRmDocumentService rmDocumentService;
 
 
     /**
@@ -92,7 +98,6 @@ public class ILuceneServiceImpl implements ILuceneService {
                 for (String id : knowledge.getIds()) {
                     document.add(new StringField("id", id, Field.Store.YES));
                     log.info("id---------->{}", id);
-
                 }
             }
             //建立tag
@@ -123,12 +128,13 @@ public class ILuceneServiceImpl implements ILuceneService {
 
     /**
      * 查询索引
-     * @param search 查询对象
+     *
+     * @param searchParam 查询对象
      * @return
      * @throws Exception
      */
     @Override
-    public List<SearchVo> search(List<Search> search) throws Exception {
+    public List<SearchVo> search(SearchParam searchParam) throws Exception {
         //打开索引目录
         Directory directory = FSDirectory.open(Paths.get(indexPath));
         //索引读取工具
@@ -138,17 +144,18 @@ public class ILuceneServiceImpl implements ILuceneService {
         //创建查询解析器
 //        IKAnalyzer analyzer = new IKAnalyzer();
         SmartChineseAnalyzer analyzer = new SmartChineseAnalyzer();
-        if (!search.isEmpty()) {
-            BooleanQuery.Builder builder = new BooleanQuery.Builder();
-            List<SearchVo> vos = new ArrayList<>();
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        List<SearchVo> vos = new ArrayList<>();
+
+        if (!searchParam.getSearche().isEmpty()) {
             //创建组合查询对象
-            for (Search s : search) {
+            for (Search s : searchParam.getSearche()) {
                 //指定查询的域
                 Query query1;
-                Query query2;
                 Query query3;
                 Query query4;
                 Query query5;
+                Query query6;
                 //如果状态为should，那么使用“或”关系拼接
                 if (s.getStatus().equalsIgnoreCase("should")) {
                     if (s.getKey().equals("sjrq")) {
@@ -160,24 +167,28 @@ public class ILuceneServiceImpl implements ILuceneService {
                         builder.add(query3, BooleanClause.Occur.SHOULD);
                         builder.add(query4, BooleanClause.Occur.SHOULD);
                         builder.add(query5, BooleanClause.Occur.SHOULD);
+                    } else if (s.getKey().equals("desc")) {
+                        query6 = new QueryParser("desc", analyzer).parse("\"" + s.getValue() + "\"");
+                        builder.add(query6, BooleanClause.Occur.SHOULD);
                     } else {
                         //创建查询对象
                         query1 = new TermQuery(new Term(s.getKey(), s.getValue()));
                         //将每一个参数都放入到组合查询中
                         builder.add(query1, BooleanClause.Occur.SHOULD);
+
                     }
                 }
-                //如果状态为must，那么用“且”关系拼接
-                if (s.getStatus().equalsIgnoreCase("must")) {
-                    if (s.getKey().equalsIgnoreCase("zzmc")) {
-                        query2 = new FuzzyQuery(new Term(s.getKey(), s.getValue()));
-                        builder.add(query2, BooleanClause.Occur.MUST);
-                    } else {
-                        query1 = new TermQuery(new Term(s.getKey(), s.getValue()));
-                        //将每一个参数都放入到组合查询中
-                        builder.add(query1, BooleanClause.Occur.MUST);
-                    }
-                }
+//                //如果状态为must，那么用“且”关系拼接
+//                if (s.getStatus().equalsIgnoreCase("must")) {
+//                    if (s.getKey().equalsIgnoreCase("zzmc")) {
+//                        query2 = new FuzzyQuery(new Term(s.getKey(), s.getValue()));
+//                        builder.add(query2, BooleanClause.Occur.MUST);
+//                    } else {
+//                        query1 = new TermQuery(new Term(s.getKey(), s.getValue()));
+//                        //将每一个参数都放入到组合查询中
+//                        builder.add(query1, BooleanClause.Occur.MUST);
+//                    }
+//                }
             }
             //第二个参数返回多少条数据
             long start = System.currentTimeMillis();
@@ -185,7 +196,7 @@ public class ILuceneServiceImpl implements ILuceneService {
 //            sort.setSort(new SortField("sjrq", SortField.Type.LONG,true));
             TopDocs docs = searcher.search(builder.build(), 20);
             long end = System.currentTimeMillis();
-            log.info("匹配" + search.toString() + "，共花费" + (end - start) + "毫秒" + "查询到" + docs.totalHits + "条数据");
+            log.info("匹配" + searchParam.getSearche().toString() + "，共花费" + (end - start) + "毫秒" + "查询到" + docs.totalHits + "条数据");
             QueryScorer scorer = new QueryScorer(builder.build());
             //第二个参数是返回页面的限制显示字数，默认为100
             Fragmenter fragmenter = new SimpleSpanFragmenter(scorer, 150);
@@ -194,6 +205,7 @@ public class ILuceneServiceImpl implements ILuceneService {
             highlighter.setTextFragmenter(fragmenter);
             //获取结果集
             ScoreDoc[] scoreDocs = docs.scoreDocs;
+            List<String> ids = new ArrayList<>();
             if (scoreDocs != null) {
                 for (int i = 0; i < scoreDocs.length; i++) {
                     SearchVo vo = new SearchVo();
@@ -228,16 +240,118 @@ public class ILuceneServiceImpl implements ILuceneService {
                     vo.setGysjlx(document.get("gysjlx"));
                     vo.setDzsjlx(document.get("dzsjlx"));
                     vo.setSgsjlx(document.get("sgsjlx"));
+                    //插入措施类型
+                    vo.setCslx(document.get("cslx"));
+
+                    ids.add(document.get("id"));
 
                     vos.add(vo);
                 }
             }
             log.info("search vo is {}", vos);
-            return vos;
-        } else {
-            return null;
         }
+        return vos;
     }
+
+    private List<SearchVo> sqlSearch(List<String> ids, QueryParam queryParam) {
+        //不加时间条件的vos
+        List<SearchVo> vos = new ArrayList<>();
+        //根据ids，和过滤条件查出知识
+        List<ProKnowledge> list = proKnowledgeService.getList(ids, queryParam);
+        for (ProKnowledge one : list) {
+            //返回前端vo
+            SearchVo vo = new SearchVo();
+            //地质设计
+            if (!StringUtils.isEmpty(one.getFile_id_geodes())) {
+                //根据地址文件id，查询文档类型
+                RmDocument document = rmDocumentService.getOne(new QueryWrapper<RmDocument>()
+                        .eq("INFORMATION_ITEM_ID", one.getFile_id_geodes()));
+                vo.setDzsjlx(document.getDocument_type());//插入文件类型
+                vo.setDzsjrq(DateUtil.parseDateToStr(one.getDate_geodes(), "yyyy-MM-dd"));
+                vo.setDzsjsjmc(one.getTitle_geodes());
+                vo.setDzsjsjr(one.getUser_geodes());
+                vo.setDzsjsjdw(one.getUnits_geodes());
+            }
+            //工艺设计
+            if (!StringUtils.isEmpty(one.getFile_id_techdes())) {
+                //根据地址文件id，查询文档类型
+                RmDocument document = rmDocumentService.getOne(new QueryWrapper<RmDocument>()
+                        .eq("INFORMATION_ITEM_ID", one.getFile_id_techdes()));
+                //插入工艺设计类型
+                vo.setGysjlx(document.getDocument_type());//文件流诶性
+                vo.setGysjrq(DateUtil.parseDateToStr(one.getDate_techdes(), "yyyy-MM-dd"));
+                vo.setGysjsjmc(one.getTitle_techdes());
+                vo.setGysjsjr(one.getUser_techdes());
+                vo.setGysjsjdw(one.getUnits_techdes());
+            }
+            //施工设计
+            if (!StringUtils.isEmpty(one.getFile_id_consdes())) {
+                //根据地址文件id，查询文档类型
+                RmDocument document = rmDocumentService.getOne(new QueryWrapper<RmDocument>()
+                        .eq("INFORMATION_ITEM_ID", one.getFile_id_consdes()));
+                //插入工艺设计类型
+                vo.setSgsjlx(document.getDocument_type());//文件类型
+                vo.setSgsjrq(DateUtil.parseDateToStr(one.getDate_consdes(), "yyyy-MM-dd"));
+                vo.setSgsjsjmc(one.getTitle_consdes());
+                vo.setSgsjsjr(one.getUser_consdes());
+                vo.setSgsjsjdw(one.getUnits_consdes());
+            }
+            //根据时间参数筛选
+            if (!StringUtils.isEmpty(queryParam.getStartTime()) && !StringUtils.isEmpty(queryParam.getEndTime())) {
+                if (!StringUtils.isEmpty(one.getFile_id_geodes())) {
+                    //判断是否在参数时间内
+                    //地质设计
+                    if (one.getDate_geodes()
+                            .after(DateUtil.parseStrToDate(queryParam.getStartTime(), "yyyy-MM-dd"))
+                            && one.getDate_geodes()
+                            .before(DateUtil.parseStrToDate(queryParam.getEndTime(), "yyyy-MM-dd"))) {
+                        //根据地址文件id，查询文档类型
+                        RmDocument document = rmDocumentService.getOne(new QueryWrapper<RmDocument>()
+                                .eq("INFORMATION_ITEM_ID", one.getFile_id_geodes()));
+                        vo.setDzsjlx(document.getDocument_type());//插入文件类型
+                        vo.setDzsjrq(DateUtil.parseDateToStr(one.getDate_geodes(), "yyyy-MM-dd"));
+                        vo.setDzsjsjmc(one.getTitle_geodes());
+                        vo.setDzsjsjr(one.getUser_geodes());
+                        vo.setDzsjsjdw(one.getUnits_geodes());
+                    }
+                    //工艺设计
+                    if (one.getDate_techdes()
+                            .after(DateUtil.parseStrToDate(queryParam.getStartTime(), "yyyy-MM-dd"))
+                            && one.getDate_techdes()
+                            .before(DateUtil.parseStrToDate(queryParam.getEndTime(), "yyyy-MM-dd"))) {
+                        //根据地址文件id，查询文档类型
+                        RmDocument document = rmDocumentService.getOne(new QueryWrapper<RmDocument>()
+                                .eq("INFORMATION_ITEM_ID", one.getFile_id_techdes()));
+                        //插入工艺设计类型
+                        vo.setGysjlx(document.getDocument_type());//文件流诶性
+                        vo.setGysjrq(DateUtil.parseDateToStr(one.getDate_techdes(), "yyyy-MM-dd"));
+                        vo.setGysjsjmc(one.getTitle_techdes());
+                        vo.setGysjsjr(one.getUser_techdes());
+                        vo.setGysjsjdw(one.getUnits_techdes());
+                    }
+                    //施工设计
+                    if (one.getDate_consdes()
+                            .after(DateUtil.parseStrToDate(queryParam.getStartTime(), "yyyy-MM-dd"))
+                            && one.getDate_consdes()
+                            .before(DateUtil.parseStrToDate(queryParam.getEndTime(), "yyyy-MM-dd"))) {
+                        //根据地址文件id，查询文档类型
+                        RmDocument document = rmDocumentService.getOne(new QueryWrapper<RmDocument>()
+                                .eq("INFORMATION_ITEM_ID", one.getFile_id_consdes()));
+                        //插入工艺设计类型
+                        vo.setSgsjlx(document.getDocument_type());//文件类型
+                        vo.setSgsjrq(DateUtil.parseDateToStr(one.getDate_consdes(), "yyyy-MM-dd"));
+                        vo.setSgsjsjmc(one.getTitle_consdes());
+                        vo.setSgsjsjr(one.getUser_consdes());
+                        vo.setSgsjsjdw(one.getUnits_consdes());
+                    }
+                }
+            }
+            vos.add(vo);
+        }
+        return vos;
+    }
+
+
 }
 
 

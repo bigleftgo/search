@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hwkj.search.mapper.ProKnowledgeMapper">
+    <sql id="Base_Column_List">
+
+
+                    information_item_id,
+                    uwi,
+                    construction_date,
+                    knowledge_name,
+                    description,
+                    profile_type,
+                    prod_horizon,
+                    field,
+                    water_horizon,
+                    production_well_type,
+                    reservoir_type,
+                    driving_type,
+                    well_type,
+                    name_unit,
+                    casing_size,
+                    measures_type,
+                    con_pro_measures,
+                    des_lift_method,
+                    des_pump_type,
+                    des_pump_diameter,
+                    ori_well_condition,
+                    des_suck_rod_type,
+                    des_suck_rod_material,
+                    des_tub_type,
+                    is_wei_bar,
+                    is_whe_add_cen,
+                    rod_combination,
+                    tube_assembly,
+                    on_repa_reason,
+                    well_conditions,
+                    file_id_geodes,
+                    title_geodes,
+                    units_geodes,
+                    user_geodes,
+                    date_geodes,
+                    file_id_techdes,
+                    title_techdes,
+                    units_techdes,
+                    user_techdes,
+                    date_techdes,
+                    file_id_consdes,
+                    title_consdes,
+                    units_consdes,
+                    user_consdes,
+                    date_consdes,
+                    knowledge_label,
+                    des_screw_pump_type,
+                    des_screw_pump_model,
+                    rod_des,
+                    des_esp_types,
+                    des_esp_model,
+                    sub_motor,
+                    protector,
+                    `separator`,
+                    des_suck_rod,
+                    ground_drives,
+                    dwmc,
+                    gztid,
+                    xgyjsid
+
+    </sql>
+    <resultMap id="BaseResultMap" type="com.hwkj.search.bean.ProKnowledge">
+        <result column="information_item_id" property="information_item_id"/>
+        <result column="uwi" property="uwi"/>
+        <result column="construction_date" property="construction_date"/>
+        <result column="knowledge_name" property="knowledge_name"/>
+        <result column="description" property="description"/>
+        <result column="profile_type" property="profile_type"/>
+        <result column="prod_horizon" property="prod_horizon"/>
+        <result column="field" property="field"/>
+        <result column="water_horizon" property="water_horizon"/>
+        <result column="production_well_type" property="production_well_type"/>
+        <result column="reservoir_type" property="reservoir_type"/>
+        <result column="driving_type" property="driving_type"/>
+        <result column="well_type" property="well_type"/>
+        <result column="name_unit" property="name_unit"/>
+        <result column="casing_size" property="casing_size"/>
+        <result column="measures_type" property="measures_type"/>
+        <result column="con_pro_measures" property="con_pro_measures"/>
+        <result column="des_lift_method" property="des_lift_method"/>
+        <result column="des_pump_type" property="des_pump_type"/>
+        <result column="des_pump_diameter" property="des_pump_diameter"/>
+        <result column="ori_well_condition" property="ori_well_condition"/>
+        <result column="des_suck_rod_type" property="des_suck_rod_type"/>
+        <result column="des_suck_rod_material" property="des_suck_rod_material"/>
+        <result column="des_tub_type" property="des_tub_type"/>
+        <result column="is_wei_bar" property="is_wei_bar"/>
+        <result column="is_whe_add_cen" property="is_whe_add_cen"/>
+        <result column="rod_combination" property="rod_combination"/>
+        <result column="tube_assembly" property="tube_assembly"/>
+        <result column="on_repa_reason" property="on_repa_reason"/>
+        <result column="well_conditions" property="well_conditions"/>
+        <result column="file_id_geodes" property="file_id_geodes"/>
+        <result column="title_geodes" property="title_geodes"/>
+        <result column="units_geodes" property="units_geodes"/>
+        <result column="user_geodes" property="user_geodes"/>
+        <result column="date_geodes" property="date_geodes"/>
+        <result column="file_id_techdes" property="file_id_techdes"/>
+        <result column="title_techdes" property="title_techdes"/>
+        <result column="units_techdes" property="units_techdes"/>
+        <result column="user_techdes" property="user_techdes"/>
+        <result column="date_techdes" property="date_techdes"/>
+        <result column="file_id_consdes" property="file_id_consdes"/>
+        <result column="title_consdes" property="title_consdes"/>
+        <result column="units_consdes" property="units_consdes"/>
+        <result column="user_consdes" property="user_consdes"/>
+        <result column="date_consdes" property="date_consdes"/>
+        <result column="knowledge_label" property="knowledge_label"/>
+        <result column="des_screw_pump_type" property="des_screw_pump_type"/>
+        <result column="des_screw_pump_model" property="des_screw_pump_model"/>
+        <result column="rod_des" property="rod_des"/>
+        <result column="des_esp_types" property="des_esp_types"/>
+        <result column="des_esp_model" property="des_esp_model"/>
+        <result column="sub_motor" property="sub_motor"/>
+        <result column="protector" property="protector"/>
+        <result column="separator" property="separator"/>
+        <result column="des_suck_rod" property="des_suck_rod"/>
+        <result column="ground_drives" property="ground_drives"/>
+        <result column="dwmc" property="dwmc"/>
+        <result column="gztid" property="gztid"/>
+        <result column="xgyjsid" property="xgyjsid"/>
+    </resultMap>
+    <select id="getList" resultMap="BaseResultMap">
+        select * from PRO_KNOWLEDGE where (FILE_ID_GEODES in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id,jdbcType=VARCHAR}
+        </foreach> or FILE_ID_TECHDES in
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id,jdbcType=VARCHAR}
+        </foreach> or FILE_ID_CONSDES in <foreach collection="ids" item="id" separator="," open="(" close=")">
+        #{id,jdbcType=VARCHAR}
+    </foreach> )
+        <if test="zzmc != null and zzmc != ''">
+            and KNOWLEDGE_NAME like '%'||#{zzmc,jdbcType=VARCHAR}||'%'
+        </if>
+        <if test="cslx != null and cslx != ''">
+            and MEASURES_TYPE = #{cslx,jdbcType=VARCHAR}
+        </if>
+        <if test="yclx != null and yclx != ''">
+            and RESERVOIR_TYPE = #{yclx,jdbcType=VARCHAR}
+        </if>
+        <if test="sjdw != null and sjdw != ''">
+            and NAME_UNIT = #{sjdw,jdbcType=VARCHAR}
+        </if>
+        <if test="qdlx != null and qdlx != ''">
+            and DRIVING_TYPE = #{qdlx,jdbcType=VARCHAR}
+        </if>
+        <if test="sortName == 1">
+            order by KNOWLEDGE_NAME
+        </if>
+    </select>
+</mapper>

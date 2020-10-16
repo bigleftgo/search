@@ -1,7 +1,9 @@
 package com.hwkj.search.service;
 
 import com.hwkj.search.bean.Knowledge;
+import com.hwkj.search.bean.QueryParam;
 import com.hwkj.search.bean.Search;
+import com.hwkj.search.bean.SearchParam;
 import com.hwkj.search.common.Result;
 import com.hwkj.search.vo.SearchVo;
 
@@ -23,10 +25,10 @@ public interface ILuceneService {
     void createIndex(List<Knowledge> k) throws Exception;
     /**
      * 查询索引
-     * @param search
+     * @param searchParam
      * @return
      * @throws Exception
      */
-    List<SearchVo> search(List<Search> search) throws Exception;
+    List<SearchVo> search(SearchParam searchParam) throws Exception;
 
 }
