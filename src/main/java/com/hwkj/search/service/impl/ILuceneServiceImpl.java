@@ -2,6 +2,7 @@ package com.hwkj.search.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.hwkj.search.bean.*;
+import com.hwkj.search.service.IFileService;
 import com.hwkj.search.service.ILuceneService;
 import com.hwkj.search.service.IProKnowledgeService;
 import com.hwkj.search.service.IRmDocumentService;
@@ -251,6 +252,40 @@ public class ILuceneServiceImpl implements ILuceneService {
             log.info("search vo is {}", vos);
         }
         return vos;
+    }
+
+    /**
+     * 更新索引
+     *
+     * @param k
+     * @throws IOException
+     */
+    @Override
+    public void updateIndex(ProUpKonwledge k) throws IOException {
+        Directory directory = FSDirectory.open(Paths.get(indexPath));
+        IndexWriterConfig conf = new IndexWriterConfig(new SmartChineseAnalyzer());
+        IndexWriter indexWriter = new IndexWriter(directory, conf);
+        Document doc = new Document();
+        for (UpKonwledge konwledge : k.getList()) {
+            doc.add(new StringField(konwledge.getKey(), konwledge.getNewVal(), Field.Store.YES));
+            log.info("修改索引key----------->{}", konwledge.getKey());
+        }
+        if (!StringUtils.isEmpty(k.getPath())) {
+            List<String> pathList = new ArrayList<>();
+            pathList.add(k.getPath());
+            List<String> contents = DocReadUtil.readWord(pathList);
+            if (!contents.isEmpty()) {
+                for (String content : contents) {
+                    //建立内容索引
+                    doc.add(new TextField("desc", content, Field.Store.YES));
+                    log.info("修改文档内容文档内容{}", content);
+                }
+            }
+        }
+        long l = indexWriter.updateDocument(new Term("id", k.getId()), doc);
+        log.info("更新了" + l + "条");
+        indexWriter.commit();
+        indexWriter.close();
     }
 
     private List<SearchVo> sqlSearch(List<String> ids, QueryParam queryParam) {

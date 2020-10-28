@@ -10,7 +10,8 @@ public enum ErrorCode {
     FILE_UPLOAD(12, "文件上传错误"),
     FILE_ERROR(14, "文件错误"),
     FILE_MISS_CHUNKS(16, "文件部分模块上传错误"),
-    INDEX_FAILURE(15,"索引创建失败");
+    INDEX_FAILURE(15,"索引创建失败"),
+    INDEX_UPDATE_FAILURE(17,"索引更新失败");
 
     private final Integer code;
 

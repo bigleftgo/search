@@ -1,9 +1,9 @@
 package com.hwkj.search.controller;
 
 import com.hwkj.search.bean.Knowledge;
-import com.hwkj.search.bean.QueryParam;
-import com.hwkj.search.bean.Search;
+import com.hwkj.search.bean.ProUpKonwledge;
 import com.hwkj.search.bean.SearchParam;
+import com.hwkj.search.bean.UpKonwledge;
 import com.hwkj.search.common.ErrorCode;
 import com.hwkj.search.common.RestResponse;
 import com.hwkj.search.common.RestResponses;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -45,11 +46,17 @@ public class LuceneController {
             luceneService.createIndex(k);
             return RestResponses.newSuccessResponse("索引创建成功", null);
         } catch (Exception e) {
-            return RestResponses.newFailResponse(ErrorCode.INDEX_FAILURE,"文件被损坏"+e.getMessage());
+            return RestResponses.newFailResponse(ErrorCode.INDEX_FAILURE, "文件被损坏" + e.getMessage());
         }
     }
 
 
+    /**
+     * 查询索引
+     *
+     * @param searchParam 前端传参
+     * @return
+     */
     @PostMapping("/search")
     public RestResponse<List<SearchVo>> search(@RequestBody(required = false) SearchParam searchParam) {
         try {
@@ -57,6 +64,16 @@ public class LuceneController {
             return RestResponses.newSuccessResponse("查询完成", result);
         } catch (Exception e) {
             return RestResponses.newSuccessResponse("未查询到相关信息", null);
+        }
+    }
+
+    @PostMapping("/updateIndex")
+    public RestResponse<String> updateIndex(@RequestBody ProUpKonwledge k) {
+        try {
+            luceneService.updateIndex(k);
+            return RestResponses.newSuccessResponse("更新成功",null);
+        } catch (IOException e) {
+            return RestResponses.newFailResponse(ErrorCode.INDEX_UPDATE_FAILURE,"索引更新失败");
         }
     }
 }
