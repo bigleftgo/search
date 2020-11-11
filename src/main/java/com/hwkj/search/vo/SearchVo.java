@@ -92,6 +92,10 @@ public class SearchVo {
      * 措施类型
      */
     private String cslx;
+    /**
+     * 措施大类
+     */
+    private String csdl;
 
 
 }

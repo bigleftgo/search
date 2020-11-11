@@ -35,4 +35,10 @@ public interface ILuceneService {
      * @return
      */
     void updateIndex(ProUpKonwledge k) throws IOException;
+
+    /**
+     * 删除索引
+     * @param id
+     */
+    void deleteIndex(String id) throws Exception;
 }

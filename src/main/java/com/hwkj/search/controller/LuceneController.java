@@ -11,10 +11,7 @@ import com.hwkj.search.service.ILuceneService;
 import com.hwkj.search.vo.SearchVo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -67,6 +64,11 @@ public class LuceneController {
         }
     }
 
+    /**
+     * 更新索引
+     * @param k
+     * @return
+     */
     @PostMapping("/updateIndex")
     public RestResponse<String> updateIndex(@RequestBody ProUpKonwledge k) {
         try {
@@ -74,6 +76,16 @@ public class LuceneController {
             return RestResponses.newSuccessResponse("更新成功",null);
         } catch (IOException e) {
             return RestResponses.newFailResponse(ErrorCode.INDEX_UPDATE_FAILURE,"索引更新失败");
+        }
+    }
+
+    @GetMapping("/deleteIndex")
+    public RestResponse<String> deleteIndex(@RequestParam String id){
+        try {
+            luceneService.deleteIndex(id);
+            return RestResponses.newSuccessResponse("删除成功",null);
+        } catch (Exception e) {
+            return RestResponses.newFailResponse(ErrorCode.INDEX_DEL_FAILURE,"删除失败");
         }
     }
 }

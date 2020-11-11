@@ -74,6 +74,10 @@ public class ILuceneServiceImpl implements ILuceneService {
             //根据名称建立名称所对应的值得索引
             if (!knowledge.getNames().isEmpty()) {
                 for (int i = 0; i < knowledge.getNames().size(); i++) {
+                    if (knowledge.getNames().get(i).equals("desc")) {
+                        //如果desc有，说明传入的为
+                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    }
                     if (knowledge.getNames().get(i).equals("zzmc")) {
                         document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
                     } else if (knowledge.getNames().get(i).equals("gysjrq")) {
@@ -153,22 +157,11 @@ public class ILuceneServiceImpl implements ILuceneService {
             for (Search s : searchParam.getSearche()) {
                 //指定查询的域
                 Query query1;
-                Query query3;
-                Query query4;
-                Query query5;
+                Query query2;
                 Query query6;
                 //如果状态为should，那么使用“或”关系拼接
                 if (s.getStatus().equalsIgnoreCase("should")) {
-                    if (s.getKey().equals("sjrq")) {
-                        Date start = DateUtil.parseStrToDate(s.getStartTime(), "yyyy-MM-dd");
-                        Date end = DateUtil.parseStrToDate(s.getEndTime(), "yyyy-MM-dd");
-                        query3 = LongPoint.newRangeQuery("gysjrq", start.getTime(), end.getTime());
-                        query4 = LongPoint.newRangeQuery("dzsjrq", start.getTime(), end.getTime());
-                        query5 = LongPoint.newRangeQuery("sgsjrq", start.getTime(), end.getTime());
-                        builder.add(query3, BooleanClause.Occur.SHOULD);
-                        builder.add(query4, BooleanClause.Occur.SHOULD);
-                        builder.add(query5, BooleanClause.Occur.SHOULD);
-                    } else if (s.getKey().equals("desc")) {
+                    if (s.getKey().equals("desc")) {
                         query6 = new QueryParser("desc", analyzer).parse("\"" + s.getValue() + "\"");
                         builder.add(query6, BooleanClause.Occur.SHOULD);
                     } else {
@@ -176,25 +169,25 @@ public class ILuceneServiceImpl implements ILuceneService {
                         query1 = new TermQuery(new Term(s.getKey(), s.getValue()));
                         //将每一个参数都放入到组合查询中
                         builder.add(query1, BooleanClause.Occur.SHOULD);
-
                     }
                 }
-//                //如果状态为must，那么用“且”关系拼接
-//                if (s.getStatus().equalsIgnoreCase("must")) {
-//                    if (s.getKey().equalsIgnoreCase("zzmc")) {
-//                        query2 = new FuzzyQuery(new Term(s.getKey(), s.getValue()));
+                //如果状态为must，那么用“且”关系拼接
+                if (s.getStatus().equalsIgnoreCase("must")) {
+                    if (s.getKey().equals("desc")) {
+                        query6 = new QueryParser("desc", analyzer).parse("\"" + s.getValue() + "\"");
+                        builder.add(query6, BooleanClause.Occur.MUST);
+                    }
+//                    if (s.getKey().equalsIgnoreCase("zsdl")) {
+//                        query2 = new TermQuery(new Term(s.getKey(), s.getValue()));
 //                        builder.add(query2, BooleanClause.Occur.MUST);
-//                    } else {
-//                        query1 = new TermQuery(new Term(s.getKey(), s.getValue()));
-//                        //将每一个参数都放入到组合查询中
-//                        builder.add(query1, BooleanClause.Occur.MUST);
 //                    }
-//                }
+                    query2 = new TermQuery(new Term(s.getKey(), s.getValue()));
+                    //将每一个参数都放入到组合查询中
+                    builder.add(query2, BooleanClause.Occur.MUST);
+                }
             }
             //第二个参数返回多少条数据
             long start = System.currentTimeMillis();
-//            Sort sort = new Sort();
-//            sort.setSort(new SortField("sjrq", SortField.Type.LONG,true));
             TopDocs docs = searcher.search(builder.build(), 20);
             long end = System.currentTimeMillis();
             log.info("匹配" + searchParam.getSearche().toString() + "，共花费" + (end - start) + "毫秒" + "查询到" + docs.totalHits + "条数据");
@@ -206,7 +199,6 @@ public class ILuceneServiceImpl implements ILuceneService {
             highlighter.setTextFragmenter(fragmenter);
             //获取结果集
             ScoreDoc[] scoreDocs = docs.scoreDocs;
-            List<String> ids = new ArrayList<>();
             if (scoreDocs != null) {
                 for (int i = 0; i < scoreDocs.length; i++) {
                     SearchVo vo = new SearchVo();
@@ -227,6 +219,7 @@ public class ILuceneServiceImpl implements ILuceneService {
                     vo.setSgsjsjmc(document.get("sgsjsjmc"));
                     vo.setFileId(document.get("id"));
                     vo.setK_des(document.get("zsms"));
+                    vo.setCsdl(document.get("csdl"));
 
                     //插入设计单位
                     vo.setGysjsjdw(document.get("gysjsjdw"));
@@ -243,8 +236,6 @@ public class ILuceneServiceImpl implements ILuceneService {
                     vo.setSgsjlx(document.get("sgsjlx"));
                     //插入措施类型
                     vo.setCslx(document.get("cslx"));
-
-                    ids.add(document.get("id"));
 
                     vos.add(vo);
                 }
@@ -267,6 +258,12 @@ public class ILuceneServiceImpl implements ILuceneService {
         IndexWriter indexWriter = new IndexWriter(directory, conf);
         Document doc = new Document();
         for (UpKonwledge konwledge : k.getList()) {
+            if (konwledge.getKey().equals("tag")) {
+                String[] split = konwledge.getNewVal().split(",");
+                for (String s : split) {
+                    doc.add(new StringField(konwledge.getKey(), s, Field.Store.YES));
+                }
+            }
             doc.add(new StringField(konwledge.getKey(), konwledge.getNewVal(), Field.Store.YES));
             log.info("修改索引key----------->{}", konwledge.getKey());
         }
@@ -284,6 +281,16 @@ public class ILuceneServiceImpl implements ILuceneService {
         }
         long l = indexWriter.updateDocument(new Term("id", k.getId()), doc);
         log.info("更新了" + l + "条");
+        indexWriter.commit();
+        indexWriter.close();
+    }
+
+    @Override
+    public void deleteIndex(String id) throws Exception {
+        Directory directory = FSDirectory.open(Paths.get(indexPath));
+        IndexWriterConfig conf = new IndexWriterConfig(new SmartChineseAnalyzer());
+        IndexWriter indexWriter = new IndexWriter(directory, conf);
+        indexWriter.deleteDocuments(new Term("id", id));
         indexWriter.commit();
         indexWriter.close();
     }
