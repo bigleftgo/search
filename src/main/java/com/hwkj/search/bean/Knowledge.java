@@ -2,6 +2,7 @@ package com.hwkj.search.bean;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -12,7 +13,7 @@ import java.util.List;
  * @CreateTime 2020/9/15 15:00
  */
 @Data
-public class Knowledge {
+public class Knowledge implements Serializable {
     /**
      * id
      */

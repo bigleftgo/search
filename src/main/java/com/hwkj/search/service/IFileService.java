@@ -33,7 +33,7 @@ public interface IFileService {
      * 获取文件输入流
      * @param path 文件名
      */
-    InputStream getFileInputStream(String path,String fileName);
+    InputStream getFileInputStream(String path);
 
     /**
      * 断点续传

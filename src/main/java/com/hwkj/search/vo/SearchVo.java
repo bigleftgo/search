@@ -95,7 +95,31 @@ public class SearchVo {
     /**
      * 措施大类
      */
-    private String csdl;
+    private String jsdl;
+    /**
+     * 预警模型名称
+     */
+    private String yjmxmc;
+    /**
+     * 预预警模型设计类型
+     */
+    private String yjmxsjlx;
+    /**
+     * 预警模型内容
+     */
+    private String yjmxnr;
+    /**
+     * 标准规范类型
+     */
+    private String bzgfsjlx;
+    /**
+     * 标准规范描述
+     */
+    private String bzgfms;
+    /**
+     * 标准规范名称
+     */
+    private String bzgfmc;
 
 
 }

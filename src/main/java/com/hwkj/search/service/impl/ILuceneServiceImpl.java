@@ -2,7 +2,6 @@ package com.hwkj.search.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.hwkj.search.bean.*;
-import com.hwkj.search.service.IFileService;
 import com.hwkj.search.service.ILuceneService;
 import com.hwkj.search.service.IProKnowledgeService;
 import com.hwkj.search.service.IRmDocumentService;
@@ -74,10 +73,6 @@ public class ILuceneServiceImpl implements ILuceneService {
             //根据名称建立名称所对应的值得索引
             if (!knowledge.getNames().isEmpty()) {
                 for (int i = 0; i < knowledge.getNames().size(); i++) {
-                    if (knowledge.getNames().get(i).equals("desc")) {
-                        //如果desc有，说明传入的为
-                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
-                    }
                     if (knowledge.getNames().get(i).equals("zzmc")) {
                         document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
                     } else if (knowledge.getNames().get(i).equals("gysjrq")) {
@@ -92,6 +87,9 @@ public class ILuceneServiceImpl implements ILuceneService {
                         Date date = DateUtil.parseStrToDate(knowledge.getValues().get(i), "yyyy-MM-dd");
                         document.add(new LongPoint(knowledge.getNames().get(i), date.getTime()));
                         document.add(new StoredField(knowledge.getNames().get(i), date.getTime()));
+                    }else if (knowledge.getNames().get(i).equals("desc")){
+                        //如果desc有，说明传入的为
+                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
                     } else {
                         document.add(new StringField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
                     }
@@ -176,19 +174,20 @@ public class ILuceneServiceImpl implements ILuceneService {
                     if (s.getKey().equals("desc")) {
                         query6 = new QueryParser("desc", analyzer).parse("\"" + s.getValue() + "\"");
                         builder.add(query6, BooleanClause.Occur.MUST);
+                    }else {
+                        query2 = new TermQuery(new Term(s.getKey(), s.getValue()));
+                        //将每一个参数都放入到组合查询中
+                        builder.add(query2, BooleanClause.Occur.MUST);
                     }
 //                    if (s.getKey().equalsIgnoreCase("zsdl")) {
 //                        query2 = new TermQuery(new Term(s.getKey(), s.getValue()));
 //                        builder.add(query2, BooleanClause.Occur.MUST);
 //                    }
-                    query2 = new TermQuery(new Term(s.getKey(), s.getValue()));
-                    //将每一个参数都放入到组合查询中
-                    builder.add(query2, BooleanClause.Occur.MUST);
                 }
             }
             //第二个参数返回多少条数据
             long start = System.currentTimeMillis();
-            TopDocs docs = searcher.search(builder.build(), 20);
+            TopDocs docs = searcher.search(builder.build(), Integer.MAX_VALUE);
             long end = System.currentTimeMillis();
             log.info("匹配" + searchParam.getSearche().toString() + "，共花费" + (end - start) + "毫秒" + "查询到" + docs.totalHits + "条数据");
             QueryScorer scorer = new QueryScorer(builder.build());
@@ -219,7 +218,8 @@ public class ILuceneServiceImpl implements ILuceneService {
                     vo.setSgsjsjmc(document.get("sgsjsjmc"));
                     vo.setFileId(document.get("id"));
                     vo.setK_des(document.get("zsms"));
-                    vo.setCsdl(document.get("csdl"));
+                    vo.setJsdl(document.get("jsdl"));
+                    vo.setYjmxmc(document.get("yjmxmc"));
 
                     //插入设计单位
                     vo.setGysjsjdw(document.get("gysjsjdw"));
@@ -237,6 +237,13 @@ public class ILuceneServiceImpl implements ILuceneService {
                     //插入措施类型
                     vo.setCslx(document.get("cslx"));
 
+                    //预警模型
+                    vo.setYjmxsjlx(document.get("yjmxsjlx"));
+                    vo.setYjmxnr(document.get("yjmxnr"));
+                    //标准规范
+                    vo.setBzgfmc(document.get("bzgfmc"));
+                    vo.setBzgfsjlx(document.get("bzgfsjlx"));
+                    vo.setBzgfms(document.get("bzgfms"));
                     vos.add(vo);
                 }
             }

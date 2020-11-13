@@ -60,7 +60,7 @@ public class LuceneController {
             List<SearchVo> result = luceneService.search(searchParam);
             return RestResponses.newSuccessResponse("查询完成", result);
         } catch (Exception e) {
-            return RestResponses.newSuccessResponse("未查询到相关信息", null);
+            return RestResponses.newSuccessResponse(e.getMessage(), null);
         }
     }
 

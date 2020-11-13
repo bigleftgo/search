@@ -110,7 +110,7 @@ public class FileServiceImpl implements IFileService {
      * @return
      */
     @Override
-    public InputStream getFileInputStream(String path, String fileName) {
+    public InputStream getFileInputStream(String path) {
         try {
             //根据文件名获取本地文件信息
             File file = new File(savePath + File.separator + path);

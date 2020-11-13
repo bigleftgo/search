@@ -68,8 +68,10 @@ public class FileController {
             }
 
             //获取输入流
-            inputStream = fileService.getFileInputStream(path,fileName);
-            response.setHeader("Content-Disposition", "attachment;path=" + EncodingUtils.convertToFileName(request, file.getData().getName()));
+            inputStream = fileService.getFileInputStream(path);
+//            response.reset();
+//            response.setContentType("application/x-msdownload");
+            response.setHeader("Content-Disposition", "attachment;filename=" + EncodingUtils.convertToFileName(request, fileName));
             // 获取输出流
             outputStream = response.getOutputStream();
             IOUtils.copy(inputStream, outputStream);
@@ -101,4 +103,31 @@ public class FileController {
         return RestResponses.newResponseFromResult(fileService.breakpointResumeUpload(param, request));
     }
 
+    /**
+     * 文件的内容类型
+     */
+    private static String getFileContentType(String name){
+        String result = "";
+        String fileType = name.toLowerCase();
+        if (fileType.endsWith(".png")) {
+            result = "image/png";
+        } else if (fileType.endsWith(".gif")) {
+            result = "image/gif";
+        } else if (fileType.endsWith(".jpg") || fileType.endsWith(".jpeg")) {
+            result = "image/jpeg";
+        } else if(fileType.endsWith(".svg")){
+            result = "image/svg+xml";
+        }else if (fileType.endsWith(".doc")) {
+            result = "application/msword";
+        } else if (fileType.endsWith(".xls")) {
+            result = "application/x-excel";
+        } else if (fileType.endsWith(".zip")) {
+            result = "application/zip";
+        } else if (fileType.endsWith(".pdf")) {
+            result = "application/pdf";
+        } else {
+            result = "application/octet-stream";
+        }
+        return result;
+    }
 }
