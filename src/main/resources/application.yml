@@ -17,11 +17,11 @@ spring:
 #配置solr服务地址
 file:
 # 文件存储路径
-  save-path: D:\HanWei\数据访问服务20.07.16\resouce\Knowledge\file-manager
+  save-path: C:\HanWei\数据访问服务20.07.16\resouce\Knowledge\file-manager
 # 断点续传文件配置路径
-  conf-path: D:\HanWei\数据访问服务20.07.16\resouce\Knowledge\file-manager\conf
+  conf-path: C:\HanWei\数据访问服务20.07.16\resouce\Knowledge\file-manager\conf
 # 索引创建路径
-  index-path: D:\HanWei\数据访问服务20.07.16\resouce\index
+  index-path: C:\HanWei\数据访问服务20.07.16\resouce\index
 md5:
   secure: d1WiQHyKnJb&Iels
 

@@ -1,23 +1,21 @@
 package com.hwkj.search.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.hwkj.search.bean.*;
 import com.hwkj.search.service.ILuceneService;
-import com.hwkj.search.service.IProKnowledgeService;
-import com.hwkj.search.service.IRmDocumentService;
-import com.hwkj.search.utils.DateUtil;
 import com.hwkj.search.utils.DocReadUtil;
 import com.hwkj.search.vo.SearchVo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
-import org.apache.lucene.document.*;
+import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.StringField;
+import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.*;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.highlight.*;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -25,7 +23,6 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -41,12 +38,6 @@ public class ILuceneServiceImpl implements ILuceneService {
     @Value("${file.index-path}")
     private String indexPath;
 
-    @Autowired
-    private IProKnowledgeService proKnowledgeService;
-
-    @Autowired
-    private IRmDocumentService rmDocumentService;
-
 
     /**
      * 创建索引
@@ -56,16 +47,22 @@ public class ILuceneServiceImpl implements ILuceneService {
     @Override
     public void createIndex(List<Knowledge> k) throws IOException {
         List<Document> list = new ArrayList<>();
-        for (Knowledge knowledge : k) {
+        for (int j = 0; j < k.size(); j++) {
+            Knowledge knowledge = k.get(j);
             //创建文档对象
             Document document = new Document();
             //获取知识上传的文件内容
+            StringBuilder b = new StringBuilder();
+            //将所有的value拼接到一起，放到desc种
+            for (String value : knowledge.getValues()) {
+                b.append(value);
+            }
             if (!StringUtils.isEmpty(knowledge.getPath())) {
                 List<String> contents = DocReadUtil.readWord(knowledge.getPath());
                 if (!contents.isEmpty()) {
                     for (String content : contents) {
                         //建立内容索引
-                        document.add(new TextField("desc", content, Field.Store.YES));
+                        document.add(new TextField("desc", content+b.toString(), Field.Store.YES));
                         log.info("上传文档内容{}", content);
                     }
                 }
@@ -75,27 +72,34 @@ public class ILuceneServiceImpl implements ILuceneService {
                 for (int i = 0; i < knowledge.getNames().size(); i++) {
                     if (knowledge.getNames().get(i).equals("zzmc")) {
                         document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
-                    } else if (knowledge.getNames().get(i).equals("gysjrq")) {
-                        Date date = DateUtil.parseStrToDate(knowledge.getValues().get(i), "yyyy-MM-dd");
-                        document.add(new LongPoint(knowledge.getNames().get(i), date.getTime()));
-                        document.add(new StoredField(knowledge.getNames().get(i), date.getTime()));
-                    } else if (knowledge.getNames().get(i).equals("dzsjrq")) {
-                        Date date = DateUtil.parseStrToDate(knowledge.getValues().get(i), "yyyy-MM-dd");
-                        document.add(new LongPoint(knowledge.getNames().get(i), date.getTime()));
-                        document.add(new StoredField(knowledge.getNames().get(i), date.getTime()));
-                    } else if (knowledge.getNames().get(i).equals("sgsjrq")) {
-                        Date date = DateUtil.parseStrToDate(knowledge.getValues().get(i), "yyyy-MM-dd");
-                        document.add(new LongPoint(knowledge.getNames().get(i), date.getTime()));
-                        document.add(new StoredField(knowledge.getNames().get(i), date.getTime()));
-                    }else if (knowledge.getNames().get(i).equals("desc")){
-                        //如果desc有，说明传入的为
+                    } else if (knowledge.getNames().get(i).equals("gysjsjmc")) {
                         document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    } else if (knowledge.getNames().get(i).equals("dzsjsjmc")) {
+                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    } else if (knowledge.getNames().get(i).equals("sgsjsjmc")) {
+                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    } else if (knowledge.getNames().get(i).equals("yjmxmc")) {
+                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    } else if (knowledge.getNames().get(i).equals("bzgfmc")) {
+                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+//                    }
+//                    else if (knowledge.getNames().get(i).equals("desc")) {
+//                        //如果desc有，说明传入的为
+//                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    } else if (knowledge.getNames().get(i).equals("desc")) {
+                        StringBuilder builder = new StringBuilder();
+                        for (int y = 0; y < knowledge.getValues().size(); y++) {
+                            builder.append(knowledge.getValues().get(y));
+                        }
+                        document.add(new TextField("desc", builder.toString(), Field.Store.YES));
+                        log.info("desc---------->{}", builder.toString());
                     } else {
                         document.add(new StringField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
                     }
                     log.info("索引key-------->{},索引value-------->{}", knowledge.getNames().get(i), knowledge.getValues().get(i));
                 }
             }
+
             //建立id索引
             if (!knowledge.getIds().isEmpty()) {
                 for (String id : knowledge.getIds()) {
@@ -161,6 +165,27 @@ public class ILuceneServiceImpl implements ILuceneService {
                 if (s.getStatus().equalsIgnoreCase("should")) {
                     if (s.getKey().equals("desc")) {
                         query6 = new QueryParser("desc", analyzer).parse("\"" + s.getValue() + "\"");
+//                        query6 = new QueryParser("desc", analyzer).parse(s.getValue());
+                        builder.add(query6, BooleanClause.Occur.SHOULD);
+                    } else if (s.getKey().equals("bzgfmc")) {
+//                        query6 = new QueryParser("bzgfmc", analyzer).parse("\"" + s.getValue() + "\"");
+                        query6 = new QueryParser("bzgfmc", analyzer).parse(s.getValue());
+                        builder.add(query6, BooleanClause.Occur.SHOULD);
+                    } else if (s.getKey().equals("gysjsjmc")) {
+//                        query6 = new QueryParser("gysjsjmc", analyzer).parse("\"" + s.getValue() + "\"");
+                        query6 = new QueryParser("gysjsjmc", analyzer).parse(s.getValue());
+                        builder.add(query6, BooleanClause.Occur.SHOULD);
+                    } else if (s.getKey().equals("dzsjsjmc")) {
+//                        query6 = new QueryParser("dzsjsjmc", analyzer).parse("\"" + s.getValue() + "\"");
+                        query6 = new QueryParser("dzsjsjmc", analyzer).parse(s.getValue());
+                        builder.add(query6, BooleanClause.Occur.SHOULD);
+                    } else if (s.getKey().equals("sgsjsjmc")) {
+//                        query6 = new QueryParser("sgsjsjmc", analyzer).parse("\"" + s.getValue() + "\"");
+                        query6 = new QueryParser("sgsjsjmc", analyzer).parse(s.getValue());
+                        builder.add(query6, BooleanClause.Occur.SHOULD);
+                    } else if (s.getKey().equals("yjmxmc")) {
+//                        query6 = new QueryParser("yjmxmc", analyzer).parse("\"" + s.getValue() + "\"");
+                        query6 = new QueryParser("yjmxmc", analyzer).parse(s.getValue());
                         builder.add(query6, BooleanClause.Occur.SHOULD);
                     } else {
                         //创建查询对象
@@ -174,15 +199,11 @@ public class ILuceneServiceImpl implements ILuceneService {
                     if (s.getKey().equals("desc")) {
                         query6 = new QueryParser("desc", analyzer).parse("\"" + s.getValue() + "\"");
                         builder.add(query6, BooleanClause.Occur.MUST);
-                    }else {
+                    } else {
                         query2 = new TermQuery(new Term(s.getKey(), s.getValue()));
                         //将每一个参数都放入到组合查询中
                         builder.add(query2, BooleanClause.Occur.MUST);
                     }
-//                    if (s.getKey().equalsIgnoreCase("zsdl")) {
-//                        query2 = new TermQuery(new Term(s.getKey(), s.getValue()));
-//                        builder.add(query2, BooleanClause.Occur.MUST);
-//                    }
                 }
             }
             //第二个参数返回多少条数据
@@ -207,20 +228,53 @@ public class ILuceneServiceImpl implements ILuceneService {
                     if (document.get("desc") != null) {
                         String desc = highlighter.getBestFragment(analyzer, "desc", document.get("desc"));
                         vo.setDesc(desc);
+                        if (!StringUtils.isEmpty(desc)) {
+                            vo.setDesc(desc);
+                        } else {
+                            vo.setDesc(document.get("desc"));
+                        }
                     }
                     //插入设计人
                     vo.setGysjsjr(document.get("gysjsjr"));
                     vo.setDzsjsjr(document.get("dzsjsjr"));
                     vo.setSgsjsjr(document.get("sgsjsjr"));
                     //插入设计名称
-                    vo.setGysjsjmc(document.get("gysjsjmc"));
-                    vo.setDzsjsjmc(document.get("dzsjsjmc"));
-                    vo.setSgsjsjmc(document.get("sgsjsjmc"));
+                    if (document.get("gysjsjmc") != null) {
+                        String gysjsjmc = highlighter.getBestFragment(analyzer, "gysjsjmc", document.get("gysjsjmc"));
+                        if (!StringUtils.isEmpty(gysjsjmc)) {
+                            vo.setGysjsjmc(gysjsjmc);
+                        } else {
+                            vo.setGysjsjmc(document.get("gysjsjmc"));
+                        }
+                    }
+                    if (document.get("dzsjsjmc") != null) {
+                        String dzsjsjmc = highlighter.getBestFragment(analyzer, "dzsjsjmc", document.get("dzsjsjmc"));
+                        if (!StringUtils.isEmpty(dzsjsjmc)) {
+                            vo.setDzsjsjmc(dzsjsjmc);
+                        } else {
+                            vo.setDzsjsjmc(document.get("dzsjsjmc"));
+                        }
+                    }
+                    if (document.get("sgsjsjmc") != null) {
+                        String sgsjsjmc = highlighter.getBestFragment(analyzer, "sgsjsjmc", document.get("sgsjsjmc"));
+                        if (!StringUtils.isEmpty(sgsjsjmc)) {
+                            vo.setSgsjsjmc(sgsjsjmc);
+                        } else {
+                            vo.setSgsjsjmc(document.get("sgsjsjmc"));
+                        }
+                    }
                     vo.setFileId(document.get("id"));
                     vo.setK_des(document.get("zsms"));
                     vo.setJsdl(document.get("jsdl"));
-                    vo.setYjmxmc(document.get("yjmxmc"));
-
+                    //预警模型名称
+                    if (document.get("yjmxmc") != null) {
+                        String yjmxmc = highlighter.getBestFragment(analyzer, "yjmxmc", document.get("yjmxmc"));
+                        if (!StringUtils.isEmpty(yjmxmc)) {
+                            vo.setYjmxmc(yjmxmc);
+                        } else {
+                            vo.setYjmxmc(document.get("yjmxmc"));
+                        }
+                    }
                     //插入设计单位
                     vo.setGysjsjdw(document.get("gysjsjdw"));
                     vo.setDzsjsjdw(document.get("dzsjsjdw"));
@@ -241,7 +295,14 @@ public class ILuceneServiceImpl implements ILuceneService {
                     vo.setYjmxsjlx(document.get("yjmxsjlx"));
                     vo.setYjmxnr(document.get("yjmxnr"));
                     //标准规范
-                    vo.setBzgfmc(document.get("bzgfmc"));
+                    if (document.get("bzgfmc") != null) {
+                        String bzgfmc = highlighter.getBestFragment(analyzer, "bzgfmc", document.get("bzgfmc"));
+                        if (!StringUtils.isEmpty(bzgfmc)) {
+                            vo.setBzgfmc(bzgfmc);
+                        } else {
+                            vo.setBzgfmc(document.get("bzgfmc"));
+                        }
+                    }
                     vo.setBzgfsjlx(document.get("bzgfsjlx"));
                     vo.setBzgfms(document.get("bzgfms"));
                     vos.add(vo);
@@ -301,106 +362,6 @@ public class ILuceneServiceImpl implements ILuceneService {
         indexWriter.commit();
         indexWriter.close();
     }
-
-    private List<SearchVo> sqlSearch(List<String> ids, QueryParam queryParam) {
-        //不加时间条件的vos
-        List<SearchVo> vos = new ArrayList<>();
-        //根据ids，和过滤条件查出知识
-        List<ProKnowledge> list = proKnowledgeService.getList(ids, queryParam);
-        for (ProKnowledge one : list) {
-            //返回前端vo
-            SearchVo vo = new SearchVo();
-            //地质设计
-            if (!StringUtils.isEmpty(one.getFile_id_geodes())) {
-                //根据地址文件id，查询文档类型
-                RmDocument document = rmDocumentService.getOne(new QueryWrapper<RmDocument>()
-                        .eq("INFORMATION_ITEM_ID", one.getFile_id_geodes()));
-                vo.setDzsjlx(document.getDocument_type());//插入文件类型
-                vo.setDzsjrq(DateUtil.parseDateToStr(one.getDate_geodes(), "yyyy-MM-dd"));
-                vo.setDzsjsjmc(one.getTitle_geodes());
-                vo.setDzsjsjr(one.getUser_geodes());
-                vo.setDzsjsjdw(one.getUnits_geodes());
-            }
-            //工艺设计
-            if (!StringUtils.isEmpty(one.getFile_id_techdes())) {
-                //根据地址文件id，查询文档类型
-                RmDocument document = rmDocumentService.getOne(new QueryWrapper<RmDocument>()
-                        .eq("INFORMATION_ITEM_ID", one.getFile_id_techdes()));
-                //插入工艺设计类型
-                vo.setGysjlx(document.getDocument_type());//文件流诶性
-                vo.setGysjrq(DateUtil.parseDateToStr(one.getDate_techdes(), "yyyy-MM-dd"));
-                vo.setGysjsjmc(one.getTitle_techdes());
-                vo.setGysjsjr(one.getUser_techdes());
-                vo.setGysjsjdw(one.getUnits_techdes());
-            }
-            //施工设计
-            if (!StringUtils.isEmpty(one.getFile_id_consdes())) {
-                //根据地址文件id，查询文档类型
-                RmDocument document = rmDocumentService.getOne(new QueryWrapper<RmDocument>()
-                        .eq("INFORMATION_ITEM_ID", one.getFile_id_consdes()));
-                //插入工艺设计类型
-                vo.setSgsjlx(document.getDocument_type());//文件类型
-                vo.setSgsjrq(DateUtil.parseDateToStr(one.getDate_consdes(), "yyyy-MM-dd"));
-                vo.setSgsjsjmc(one.getTitle_consdes());
-                vo.setSgsjsjr(one.getUser_consdes());
-                vo.setSgsjsjdw(one.getUnits_consdes());
-            }
-            //根据时间参数筛选
-            if (!StringUtils.isEmpty(queryParam.getStartTime()) && !StringUtils.isEmpty(queryParam.getEndTime())) {
-                if (!StringUtils.isEmpty(one.getFile_id_geodes())) {
-                    //判断是否在参数时间内
-                    //地质设计
-                    if (one.getDate_geodes()
-                            .after(DateUtil.parseStrToDate(queryParam.getStartTime(), "yyyy-MM-dd"))
-                            && one.getDate_geodes()
-                            .before(DateUtil.parseStrToDate(queryParam.getEndTime(), "yyyy-MM-dd"))) {
-                        //根据地址文件id，查询文档类型
-                        RmDocument document = rmDocumentService.getOne(new QueryWrapper<RmDocument>()
-                                .eq("INFORMATION_ITEM_ID", one.getFile_id_geodes()));
-                        vo.setDzsjlx(document.getDocument_type());//插入文件类型
-                        vo.setDzsjrq(DateUtil.parseDateToStr(one.getDate_geodes(), "yyyy-MM-dd"));
-                        vo.setDzsjsjmc(one.getTitle_geodes());
-                        vo.setDzsjsjr(one.getUser_geodes());
-                        vo.setDzsjsjdw(one.getUnits_geodes());
-                    }
-                    //工艺设计
-                    if (one.getDate_techdes()
-                            .after(DateUtil.parseStrToDate(queryParam.getStartTime(), "yyyy-MM-dd"))
-                            && one.getDate_techdes()
-                            .before(DateUtil.parseStrToDate(queryParam.getEndTime(), "yyyy-MM-dd"))) {
-                        //根据地址文件id，查询文档类型
-                        RmDocument document = rmDocumentService.getOne(new QueryWrapper<RmDocument>()
-                                .eq("INFORMATION_ITEM_ID", one.getFile_id_techdes()));
-                        //插入工艺设计类型
-                        vo.setGysjlx(document.getDocument_type());//文件流诶性
-                        vo.setGysjrq(DateUtil.parseDateToStr(one.getDate_techdes(), "yyyy-MM-dd"));
-                        vo.setGysjsjmc(one.getTitle_techdes());
-                        vo.setGysjsjr(one.getUser_techdes());
-                        vo.setGysjsjdw(one.getUnits_techdes());
-                    }
-                    //施工设计
-                    if (one.getDate_consdes()
-                            .after(DateUtil.parseStrToDate(queryParam.getStartTime(), "yyyy-MM-dd"))
-                            && one.getDate_consdes()
-                            .before(DateUtil.parseStrToDate(queryParam.getEndTime(), "yyyy-MM-dd"))) {
-                        //根据地址文件id，查询文档类型
-                        RmDocument document = rmDocumentService.getOne(new QueryWrapper<RmDocument>()
-                                .eq("INFORMATION_ITEM_ID", one.getFile_id_consdes()));
-                        //插入工艺设计类型
-                        vo.setSgsjlx(document.getDocument_type());//文件类型
-                        vo.setSgsjrq(DateUtil.parseDateToStr(one.getDate_consdes(), "yyyy-MM-dd"));
-                        vo.setSgsjsjmc(one.getTitle_consdes());
-                        vo.setSgsjsjr(one.getUser_consdes());
-                        vo.setSgsjsjdw(one.getUnits_consdes());
-                    }
-                }
-            }
-            vos.add(vo);
-        }
-        return vos;
-    }
-
-
 }
 
 

@@ -28,7 +28,7 @@ import java.util.List;
  */
 @Slf4j
 public class DocReadUtil {
-    private static final String savePath = "D:\\HanWei\\数据访问服务20.07.16\\resouce\\Knowledge\\file-manager";
+    private static final String savePath = "C:\\HanWei\\数据访问服务20.07.16\\resouce\\Knowledge\\file-manager";
 
     public static List<String> readWord(List<String> path) throws IOException {
         List<String> list = new ArrayList<>();
