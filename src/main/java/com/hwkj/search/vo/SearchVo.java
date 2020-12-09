@@ -1,6 +1,5 @@
 package com.hwkj.search.vo;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 /**

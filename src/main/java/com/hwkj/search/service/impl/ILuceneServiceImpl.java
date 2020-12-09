@@ -3,6 +3,7 @@ package com.hwkj.search.service.impl;
 import com.hwkj.search.bean.*;
 import com.hwkj.search.service.ILuceneService;
 import com.hwkj.search.utils.DocReadUtil;
+import com.hwkj.search.vo.HwkjSearchVo;
 import com.hwkj.search.vo.SearchVo;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.lucene.analysis.cn.smart.SmartChineseAnalyzer;
@@ -11,6 +12,7 @@ import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.*;
+import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.*;
 import org.apache.lucene.search.highlight.*;
@@ -37,6 +39,8 @@ public class ILuceneServiceImpl implements ILuceneService {
 
     @Value("${file.index-path}")
     private String indexPath;
+    @Value("${file.index-hwkj-path}")
+    private String indexHwkjPath;
 
 
     /**
@@ -62,7 +66,7 @@ public class ILuceneServiceImpl implements ILuceneService {
                 if (!contents.isEmpty()) {
                     for (String content : contents) {
                         //建立内容索引
-                        document.add(new TextField("desc", content+b.toString(), Field.Store.YES));
+                        document.add(new TextField("desc", content + b.toString(), Field.Store.YES));
                         log.info("上传文档内容{}", content);
                     }
                 }
@@ -143,7 +147,7 @@ public class ILuceneServiceImpl implements ILuceneService {
     @Override
     public List<SearchVo> search(SearchParam searchParam) throws Exception {
         //打开索引目录
-        Directory directory = FSDirectory.open(Paths.get(indexPath));
+        Directory directory = FSDirectory.open(Paths.get(indexHwkjPath));
         //索引读取工具
         IndexReader reader = DirectoryReader.open(directory);
         //索引搜索工具
@@ -353,6 +357,12 @@ public class ILuceneServiceImpl implements ILuceneService {
         indexWriter.close();
     }
 
+    /**
+     * 删除索引
+     *
+     * @param id 文档id
+     * @throws Exception
+     */
     @Override
     public void deleteIndex(String id) throws Exception {
         Directory directory = FSDirectory.open(Paths.get(indexPath));
@@ -361,6 +371,186 @@ public class ILuceneServiceImpl implements ILuceneService {
         indexWriter.deleteDocuments(new Term("id", id));
         indexWriter.commit();
         indexWriter.close();
+    }
+
+    @Override
+    public List<HwkjSearchVo> hwkjSearch(SearchParam searchParam) throws IOException, ParseException, InvalidTokenOffsetsException {
+        //打开索引目录
+        Directory directory = FSDirectory.open(Paths.get(indexHwkjPath));
+        //索引读取工具
+        IndexReader reader = DirectoryReader.open(directory);
+        //索引搜索工具
+        IndexSearcher searcher = new IndexSearcher(reader);
+        //创建查询解析器
+//        IKAnalyzer analyzer = new IKAnalyzer();
+        SmartChineseAnalyzer analyzer = new SmartChineseAnalyzer();
+        BooleanQuery.Builder builder = new BooleanQuery.Builder();
+        List<HwkjSearchVo> vos = new ArrayList<>();
+        if (!searchParam.getSearche().isEmpty()) {
+            for (Search s : searchParam.getSearche()) {
+                //指定查询的域
+                Query query1;
+                Query query2;
+                Query query6;
+                //如果状态为should，那么使用“或”关系拼接
+                if (s.getStatus().equalsIgnoreCase("should")) {
+                    if (s.getKey().equals("desc")) {
+                        query6 = new QueryParser("desc", analyzer).parse("\"" + s.getValue() + "\"");
+                        builder.add(query6, BooleanClause.Occur.SHOULD);
+                    } else {
+                        //创建查询对象
+                        query1 = new TermQuery(new Term(s.getKey(), s.getValue()));
+                        //将每一个参数都放入到组合查询中
+                        builder.add(query1, BooleanClause.Occur.SHOULD);
+                    }
+                }
+                //如果状态为must，那么用“且”关系拼接
+                if (s.getStatus().equalsIgnoreCase("must")) {
+                    if (s.getKey().equals("desc")) {
+                        query6 = new QueryParser("desc", analyzer).parse("\"" + s.getValue() + "\"");
+                        builder.add(query6, BooleanClause.Occur.MUST);
+                    } else {
+                        query2 = new TermQuery(new Term(s.getKey(), s.getValue()));
+                        //将每一个参数都放入到组合查询中
+                        builder.add(query2, BooleanClause.Occur.MUST);
+                    }
+                }
+            }
+
+            //第二个参数返回多少条数据
+            long start = System.currentTimeMillis();
+            TopDocs docs = searcher.search(builder.build(), Integer.MAX_VALUE);
+            long end = System.currentTimeMillis();
+            log.info("匹配" + searchParam.getSearche().toString() + "，共花费" + (end - start) + "毫秒" + "查询到" + docs.totalHits + "条数据");
+            QueryScorer scorer = new QueryScorer(builder.build());
+            //第二个参数是返回页面的限制显示字数，默认为100
+            Fragmenter fragmenter = new SimpleSpanFragmenter(scorer, 150);
+            SimpleHTMLFormatter simpleHTMLFormatter = new SimpleHTMLFormatter("<b><font color='red'>", "</font></b>");
+            Highlighter highlighter = new Highlighter(simpleHTMLFormatter, scorer);
+            highlighter.setTextFragmenter(fragmenter);
+            //获取结果集
+            ScoreDoc[] scoreDocs = docs.scoreDocs;
+            if (scoreDocs != null) {
+                for (int i = 0; i < scoreDocs.length; i++) {
+                    HwkjSearchVo vo = new HwkjSearchVo();
+                    Document document = searcher.doc(scoreDocs[i].doc);
+                    //获取高亮显示内容
+                    if (document.get("desc") != null) {
+                        String desc = highlighter.getBestFragment(analyzer, "desc", document.get("desc"));
+                        vo.setDesc(desc);
+                        if (!StringUtils.isEmpty(desc)) {
+                            vo.setDesc(desc);
+                        } else {
+                            vo.setDesc(document.get("desc"));
+                        }
+                    }
+
+                    vo.setWdmc(document.get("wdmc"));
+                    vo.setMs(document.get("ms"));
+                    vo.setZsbq(document.get("zsbq"));
+                    vo.setBxbm(document.get("bxbm"));
+                    vo.setBxr(document.get("bxr"));
+                    vo.setBxrq(document.get("bxrq"));
+                    vo.setXmmc(document.get("xmmc"));
+                    vo.setSslx(document.get("sslx"));
+                    vo.setJsdl(document.get("jsdl"));
+                    vo.setFileId(document.get("id"));
+                    vos.add(vo);
+                    log.info("索引vo-------{}",vo);
+                }
+            }
+        }
+        return vos;
+    }
+
+    @Override
+    public void hwkjCreatIndex(List<Knowledge> k) throws IOException {
+        List<Document> list = new ArrayList<>();
+        for (int j = 0; j < k.size(); j++) {
+            Knowledge knowledge = k.get(j);
+            //创建文档对象
+            Document document = new Document();
+            //获取知识上传的文件内容
+            StringBuilder b = new StringBuilder();
+            //将所有的value拼接到一起，放到desc种
+            for (String value : knowledge.getValues()) {
+                b.append(value);
+            }
+            if (!StringUtils.isEmpty(knowledge.getPath())) {
+                List<String> contents = DocReadUtil.readWord(knowledge.getPath());
+                if (!contents.isEmpty()) {
+                    for (String content : contents) {
+                        //建立内容索引
+                        document.add(new TextField("desc", content + b.toString(), Field.Store.YES));
+                        log.info("上传文档内容{}", content);
+                    }
+                }
+            }
+            //根据名称建立名称所对应的值得索引
+            if (!knowledge.getNames().isEmpty()) {
+                for (int i = 0; i < knowledge.getNames().size(); i++) {
+                    if (knowledge.getNames().get(i).equals("zzmc")) {
+                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    } else if (knowledge.getNames().get(i).equals("gysjsjmc")) {
+                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    } else if (knowledge.getNames().get(i).equals("dzsjsjmc")) {
+                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    } else if (knowledge.getNames().get(i).equals("sgsjsjmc")) {
+                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    } else if (knowledge.getNames().get(i).equals("yjmxmc")) {
+                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    } else if (knowledge.getNames().get(i).equals("bzgfmc")) {
+                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+//                    }
+//                    else if (knowledge.getNames().get(i).equals("desc")) {
+//                        //如果desc有，说明传入的为
+//                        document.add(new TextField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    } else if (knowledge.getNames().get(i).equals("desc")) {
+                        StringBuilder builder = new StringBuilder();
+                        for (int y = 0; y < knowledge.getValues().size(); y++) {
+                            builder.append(knowledge.getValues().get(y));
+                        }
+                        document.add(new TextField("desc", builder.toString(), Field.Store.YES));
+                        log.info("desc---------->{}", builder.toString());
+                    } else {
+                        document.add(new StringField(knowledge.getNames().get(i), knowledge.getValues().get(i), Field.Store.YES));
+                    }
+                    log.info("索引key-------->{},索引value-------->{}", knowledge.getNames().get(i), knowledge.getValues().get(i));
+                }
+            }
+
+            //建立id索引
+            if (!knowledge.getIds().isEmpty()) {
+                for (String id : knowledge.getIds()) {
+                    document.add(new StringField("id", id, Field.Store.YES));
+                    log.info("id---------->{}", id);
+                }
+            }
+            //建立tag
+            if (!StringUtils.isEmpty(knowledge.getZsbq())) {
+                String[] tags = knowledge.getZsbq().split(",");
+                for (String tag : tags) {
+                    document.add(new StringField("tag", tag, Field.Store.YES));
+                    log.info("tag---------->{}", tag);
+                }
+            }
+            list.add(document);
+        }
+        //指定索引目录
+
+        Directory directory = FSDirectory.open(Paths.get(indexHwkjPath));
+        //添加配置信息
+        IndexWriterConfig conf = new IndexWriterConfig(new SmartChineseAnalyzer());
+        conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
+        IndexWriter indexWriter = new IndexWriter(directory, conf);
+        //6 把文档交给IndexWriter
+        indexWriter.addDocuments(list);
+        //7 提交
+        indexWriter.commit();
+        //8 关闭
+        indexWriter.close();
+        log.info("索引信息：{}", list.toString());
+
     }
 }
 

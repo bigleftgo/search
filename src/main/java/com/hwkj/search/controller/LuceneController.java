@@ -3,11 +3,11 @@ package com.hwkj.search.controller;
 import com.hwkj.search.bean.Knowledge;
 import com.hwkj.search.bean.ProUpKonwledge;
 import com.hwkj.search.bean.SearchParam;
-import com.hwkj.search.bean.UpKonwledge;
 import com.hwkj.search.common.ErrorCode;
 import com.hwkj.search.common.RestResponse;
 import com.hwkj.search.common.RestResponses;
 import com.hwkj.search.service.ILuceneService;
+import com.hwkj.search.vo.HwkjSearchVo;
 import com.hwkj.search.vo.SearchVo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +47,22 @@ public class LuceneController {
         }
     }
 
+    /**
+     * 创建索引
+     *
+     * @param k 知识bean
+     * @return
+     */
+    @PostMapping("/hwkjCreatIndex")
+    public RestResponse<String> hwkjCreatIndex(@RequestBody List<Knowledge> k) {
+        //根据文件path去服务器找文件信息
+        try {
+            luceneService.hwkjCreatIndex(k);
+            return RestResponses.newSuccessResponse("索引创建成功", null);
+        } catch (Exception e) {
+            return RestResponses.newFailResponse(ErrorCode.INDEX_FAILURE, "文件被损坏" + e.getMessage());
+        }
+    }
 
     /**
      * 查询索引
@@ -58,6 +74,22 @@ public class LuceneController {
     public RestResponse<List<SearchVo>> search(@RequestBody(required = false) SearchParam searchParam) {
         try {
             List<SearchVo> result = luceneService.search(searchParam);
+            return RestResponses.newSuccessResponse("查询完成", result);
+        } catch (Exception e) {
+            return RestResponses.newSuccessResponse(e.getMessage(), null);
+        }
+    }
+
+    /**
+     * 汉威科技查询索引
+     *
+     * @param searchParam 前端传参
+     * @return
+     */
+    @PostMapping("/hwkjSearch")
+    public RestResponse<List<HwkjSearchVo>> hwkjSearch(@RequestBody(required = false) SearchParam searchParam) {
+        try {
+            List<HwkjSearchVo> result = luceneService.hwkjSearch(searchParam);
             return RestResponses.newSuccessResponse("查询完成", result);
         } catch (Exception e) {
             return RestResponses.newSuccessResponse(e.getMessage(), null);
@@ -79,6 +111,11 @@ public class LuceneController {
         }
     }
 
+    /**
+     * 删除索引
+     * @param id 文档id
+     * @return
+     */
     @GetMapping("/deleteIndex")
     public RestResponse<String> deleteIndex(@RequestParam String id){
         try {

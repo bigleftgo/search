@@ -13,5 +13,4 @@ import java.util.List;
 @Data
 public class SearchParam {
     private List<Search> searche;
-    private QueryParam queryParam;
 }

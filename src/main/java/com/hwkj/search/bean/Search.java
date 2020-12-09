@@ -22,14 +22,6 @@ public class Search {
      * 拼接关键点（是拼接must还是should）
      */
     private String status;
-    /**
-     * 设计起始时间
-     */
-    private String startTime;
-    /**
-     * 设计结束世界
-     */
-    private String endTime;
 
 
 }

@@ -1,9 +1,7 @@
 package com.hwkj.search.service.impl;
 
-import cn.novelweb.tool.io.FileUtils;
 import cn.novelweb.tool.upload.local.LocalUpload;
 import cn.novelweb.tool.upload.local.pojo.UploadFileParam;
-import com.alibaba.fastjson.JSONObject;
 import com.hwkj.search.common.ErrorCode;
 import com.hwkj.search.common.Result;
 import com.hwkj.search.common.Results;
@@ -13,14 +11,12 @@ import com.hwkj.search.utils.DateUtil;
 import com.hwkj.search.utils.EmptyUtils;
 import com.hwkj.search.utils.NovelWebUtils;
 import com.hwkj.search.utils.UuidUtils;
-import com.qcloud.cos.utils.Md5Utils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
-import sun.security.provider.MD5;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
@@ -48,7 +44,6 @@ public class FileServiceImpl implements IFileService {
     @Value("${md5.secure}")
     private String secure;
 
-    private final String http = "http://192.168.37.6:8010/";
 
     /**
      * 文档上传
