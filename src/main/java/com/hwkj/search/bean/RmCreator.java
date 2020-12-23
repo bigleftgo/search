@@ -1,87 +1,123 @@
 package com.hwkj.search.bean;
 
+import java.util.Date;
 import lombok.Data;
 
-import java.util.Date;
-
-/**
- * com.hwkj.search.bean
- * 文档信息实体类
- * @author Lenovo
- * @CreateTime 2020/9/29 9:33
- */
 @Data
-public class RmDocument {
+public class RmCreator {
     /**
      * 记录子类型
      */
     private String info_item_subtype;
+
     /**
      * 记录ID
      */
     private String information_item_id;
+
     /**
-     * 文件状态
+     * 创建者ID
      */
-    private String document_status;
+    private String creator_id;
+
     /**
-     * 文件类型
+     * 创建对象ID
      */
-    private String document_type;
+    private String creator_ba_id;
+
     /**
-     * 文献来源ID
+     * 对象类型
      */
-    private String source_document_id;
+    private String creator_ba_type;
+
+    /**
+     * 创建者名字
+     */
+    private String creator_name;
+
+    /**
+     * 创建者类型
+     */
+    private String creator_type;
+
+    /**
+     * 第一个名字
+     */
+    private String first_name;
+
+    /**
+     * 最后一个名字
+     */
+    private String last_name;
+
+    /**
+     * 中间名字
+     */
+    private String middle_name;
+
     /**
      * 备注
      */
     private String remark;
+
     /**
      * 有效标识
      */
     private String active_ind;
+
     /**
      * 生效日期
      */
     private String effective_date;
+
     /**
      * 失效日期
      */
     private String expiry_date;
-    /**
-     * 来源
-     */
-    private String source;
+
     /**
      * PPDM_GUID
      */
     private String ppdm_guid;
+
+    /**
+     * 来源
+     */
+    private String source;
+
     /**
      * 行更改人
      */
     private String row_changed_by;
+
     /**
-     * 更改日期
+     * 行更改日期
      */
     private String row_changed_date;
+
     /**
      * 行创建人
      */
     private String row_created_by;
+
     /**
      * 行创建日期
      */
     private String row_created_date;
+
     /**
      * 行有效日期
      */
     private String row_effective_date;
+
     /**
      * 行失效日期
      */
     private String row_expiry_date;
+
     /**
      * 行质量
      */
     private String row_quality;
 }
+

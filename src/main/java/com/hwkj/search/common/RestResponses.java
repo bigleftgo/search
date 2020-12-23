@@ -1,5 +1,10 @@
 package com.hwkj.search.common;
 
+import com.alibaba.fastjson.JSONObject;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
+import sun.rmi.runtime.Log;
+
 import java.lang.reflect.Array;
 import java.util.Collection;
 import java.util.Map;
@@ -7,6 +12,7 @@ import java.util.Map;
 /**
  * 统一响应实体构建类
  */
+@Slf4j
 public class RestResponses {
 
     /**
@@ -85,7 +91,7 @@ public class RestResponses {
         return newSuccessResponse(string, null);
     }
 
-    public static RestResponse<Void> newSuccessResponse() {
+    public static RestResponse<Void> newSuccessResponse(ErrorCode noError) {
         return newSuccessResponse("");
     }
 
@@ -120,5 +126,21 @@ public class RestResponses {
         } else {
             return newFailResponse(result.getErrorCode(), result.getDescription());
         }
+    }
+
+    /**
+     * 校验是否成功
+     * @param strings
+     * @return
+     */
+    public static RestResponse<T> judgeResult(String... strings) {
+        for (String str : strings) {
+            log.info(str);
+            if (JSONObject.parseObject(str).getString("isSucceed").equals("false")) {
+                return newResponse(ErrorCode.SYSTEM_ERROR.getCode(), "保存失败", null, null);
+            }
+        }
+        return newResponse(ErrorCode.NO_ERROR.getCode(), "保存成功", null, null);
+
     }
 }

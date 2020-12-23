@@ -454,6 +454,7 @@ public class ILuceneServiceImpl implements ILuceneService {
                     vo.setXmmc(document.get("xmmc"));
                     vo.setSslx(document.get("sslx"));
                     vo.setJsdl(document.get("jsdl"));
+                    vo.setWdlx(document.get("wdlx"));
                     vo.setFileId(document.get("id"));
                     vos.add(vo);
                     log.info("索引vo-------{}",vo);

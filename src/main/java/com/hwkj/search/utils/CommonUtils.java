@@ -2,7 +2,13 @@ package com.hwkj.search.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
+import com.hwkj.search.common.ErrorCode;
+import com.hwkj.search.common.RestResponse;
+import com.hwkj.search.common.RestResponses;
+import org.apache.poi.ss.formula.functions.T;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,9 +20,10 @@ import java.util.List;
 public class CommonUtils {
     /**
      * 转换Json对象为集合
-     * @param str json
+     *
+     * @param str     json
      * @param classzz 类型
-     * @param <T> 类型
+     * @param <T>     类型
      * @return 返回集合
      */
     public static <T> List<T> ConvertJsonDatas(String str, Class<T> classzz) {
@@ -30,9 +37,10 @@ public class CommonUtils {
 
     /**
      * 转换Json对象为集合
-     * @param str json
+     *
+     * @param str     json
      * @param classzz 类型
-     * @param <T> 类型
+     * @param <T>     类型
      * @return 返回集合
      */
     public static <T> T ConvertJsonDatasByOne(String str, Class<T> classzz) {
@@ -44,5 +52,21 @@ public class CommonUtils {
         return list.stream().findFirst().orElse(null);
     }
 
-//    public static String
+    /**
+     * 转换Json对象，判断success的状态
+     *
+     * @param <T> 类型
+     * @param str json
+     * @return 返回集合
+     */
+    public static <T> RestResponse ConvertJsonJudgmentIsSuccess(String... str) {
+        for (String s : str) {
+            if (JSONObject.parseObject(s).getString("isSucceed").equals("false")) {
+                return RestResponses.newFailResponse(ErrorCode.SYSTEM_ERROR,"保存失败");
+            }
+        }
+            return RestResponses.newSuccessResponse("保存成功",null);
+    }
+
+
 }

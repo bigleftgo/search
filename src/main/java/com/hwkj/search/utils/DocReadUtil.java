@@ -7,8 +7,12 @@ import org.apache.pdfbox.io.RandomAccessFile;
 import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.poi.hslf.usermodel.HSLFSlideShow;
 import org.apache.poi.hwpf.extractor.WordExtractor;
+import org.apache.poi.sl.extractor.SlideShowExtractor;
+import org.apache.poi.sl.usermodel.SlideShow;
 import org.apache.poi.ss.extractor.ExcelExtractor;
+import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 
@@ -28,7 +32,7 @@ import java.util.List;
  */
 @Slf4j
 public class DocReadUtil {
-//    private static final String savePath = "C:\\HanWei\\数据访问服务20.07.16\\resouce\\Knowledge\\file-manager";
+    //    private static final String savePath = "C:\\HanWei\\数据访问服务20.07.16\\resouce\\Knowledge\\file-manager";
     private static final String savePath = "D:\\HanWei\\数据访问服务20.07.16\\resouce\\Knowledge\\file-manager";
 
     public static List<String> readWord(List<String> path) throws IOException {
@@ -71,11 +75,34 @@ public class DocReadUtil {
                 result.append(res);
                 list.add(result.toString());
                 pdfdocument.close();
+            } else if (s.endsWith(".pptx")) {
+                InputStream input = new FileInputStream(savePath + s);
+                XMLSlideShow xss = new XMLSlideShow(input);
+                //得到全部文本
+                String pptText = readBySlideShowExtractor(xss);
+                result.append(pptText);
+                list.add(result.toString());
+            } else if (s.endsWith("ppt")) {
+                InputStream input = new FileInputStream(savePath + s);
+                HSLFSlideShow hss = new HSLFSlideShow(input);
+                //得到全部文本
+                String pptText = readBySlideShowExtractor(hss);
+                result.append(pptText);
+                list.add(result.toString());
             }
         }
 
         return list;
     }
 
-
+    /**
+     * 获取ppt解析文本
+     *
+     * @param slideShow
+     * @return
+     */
+    private static String readBySlideShowExtractor(SlideShow slideShow) {
+        SlideShowExtractor slideShowExtractor = new SlideShowExtractor<>(slideShow);
+        return slideShowExtractor.getText();
+    }
 }
